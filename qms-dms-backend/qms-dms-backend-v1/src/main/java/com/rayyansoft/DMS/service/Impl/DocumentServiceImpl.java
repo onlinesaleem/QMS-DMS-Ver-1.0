@@ -1,17 +1,10 @@
 package com.rayyansoft.DMS.service.Impl;
 
 
-import com.rayyansoft.DMS.dto.AttachmentDto;
-import com.rayyansoft.DMS.dto.DocumentDto;
-import com.rayyansoft.DMS.entity.Attachment;
-import com.rayyansoft.DMS.entity.Department;
-import com.rayyansoft.DMS.entity.Document;
-import com.rayyansoft.DMS.entity.User;
+import com.rayyansoft.DMS.dto.*;
+import com.rayyansoft.DMS.entity.*;
 import com.rayyansoft.DMS.exception.ResourceNotFoundException;
-import com.rayyansoft.DMS.repository.AttachmentRepository;
-import com.rayyansoft.DMS.repository.DepartmentRepository;
-import com.rayyansoft.DMS.repository.DocumentRepository;
-import com.rayyansoft.DMS.repository.UserRepository;
+import com.rayyansoft.DMS.repository.*;
 import com.rayyansoft.DMS.service.DocumentService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -22,9 +15,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +32,10 @@ public class DocumentServiceImpl implements DocumentService {
     private ModelMapper modelMapper;
     private AttachmentRepository attachmentRepository;
     private DepartmentRepository departmentRepository;
+    private DocumentTypeRepository documentTypeRepository;
+    private DocumentApprovalWorkflowRepository documentApprovalWorkflowRepository;
+    private DocumentApprovalUserRepository documentApprovalUserRepository;
+    private ApprovalLevelRepository approvalLevelRepository;
 
     @Override
     public DocumentDto createDocument(DocumentDto documentDTO, AttachmentDto attachmentDTO, MultipartFile file) throws IOException {
@@ -45,11 +44,23 @@ public class DocumentServiceImpl implements DocumentService {
         Optional<User> user=userRepository.findByUsername(auth.getName());
         Department department = departmentRepository.findById(documentDTO.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        DocumentType documentType=documentTypeRepository.findById(documentDTO.getDocumentTypeId())
+                .orElseThrow(()-> new RuntimeException("document type not found"));
+
         Document document = modelMapper.map(documentDTO, Document.class);
         document.setCreatedDate(LocalDate.now());
-        document.setStatus(Document.DocumentStatus.DRAFT);
+        document.setApprovalStatus(Document.ApprovalStatus.UNDER_REVIEW);
        document.setCreatedBy(user.get());
        document.setDocumentDepartment(department);
+       document.setDocumentType(documentType);
+
+       ApprovalWorkflow approvalWorkflow=new ApprovalWorkflow();
+
+       approvalWorkflow.setAction("UNDER_REVIEW");
+       approvalWorkflow.setDocument(document);
+       approvalWorkflow.setTimestamp(LocalDateTime.now());
+       approvalWorkflow.setUser(user.get());
 
         // Handle file attachment (if provided)
         // Handle file attachment (if provided)
@@ -75,8 +86,59 @@ public class DocumentServiceImpl implements DocumentService {
 
 
         Document savedDocument = documentRepository.save(document);
+
+        // Create Approval Levels (you will implement the logic to determine approvers)
+        List<DocumentApprovalUserDto> approvers = getApproversForDocument(savedDocument); // Custom logic to find approvers
+        createApprovalLevelsForDocument(savedDocument, approvers); // Creating approval levels
+
+
+        documentApprovalWorkflowRepository.save(approvalWorkflow);
         return modelMapper.map(savedDocument, DocumentDto.class);
     }
+
+
+    private void createApprovalLevelsForDocument(Document savedDocument, List<DocumentApprovalUserDto> approvers) {
+        int level = 1;
+        for (DocumentApprovalUserDto approverDto : approvers) {
+            // Create and set approval level details
+            ApprovalLevel approvalLevel = new ApprovalLevel();
+            approvalLevel.setDocument(savedDocument);
+            approvalLevel.setApprover(approverDto.getUser()); // Map the DTO to the entity
+            approvalLevel.setLevel(level);
+            approvalLevel.setStatus(ApprovalLevel.ApprovalStatus.PENDING);
+            approvalLevel.setTimestamp(LocalDateTime.now());
+
+            // Save each approval level
+            approvalLevelRepository.save(approvalLevel);
+            level++;
+        }
+    }
+
+    // Method to fetch approvers for a document (custom logic needed here)
+    private List<DocumentApprovalUserDto> getApproversForDocument(Document savedDocument) {
+        // Fetch approvers based on your criteria (department, document type, etc.)
+        List<DocumentApprovalUserDto> approvers = new ArrayList<>();
+
+        // Step 1: Fetch Department Head Approvers & Reviewer
+        List<DocumentApprovalUser> departmentHeadApprovers  = documentApprovalUserRepository.findByUserDepartmentId(savedDocument.getDocumentDepartment().getId());
+
+        approvers.addAll(departmentHeadApprovers.stream()
+                .map(approver -> modelMapper.map(approver, DocumentApprovalUserDto.class))
+                .collect(Collectors.toList()));
+        // Map the entity to DTOs and return
+
+        // Step 2: Fetch Executive Level Approvers (based on criteria, such as role or department)
+        List<DocumentApprovalUser> executiveApprovers = documentApprovalUserRepository
+                .findByExecutiveUserApproval(DocumentApprovalUser.ApproverType.valueOf("Executive"));  // Assuming EXECUTIVE is a role
+
+        approvers.addAll(executiveApprovers.stream()
+                .map(approver -> modelMapper.map(approver, DocumentApprovalUserDto.class))
+                .collect(Collectors.toList()));
+
+
+        return approvers;
+    }
+
 
     @Override
     public List<Document> getDocumentByDepartment(Long departmentId) {
@@ -88,6 +150,14 @@ public class DocumentServiceImpl implements DocumentService {
         List<Document> documentes = documentRepository.findAll();
         return documentes.stream()
                 .map(document -> modelMapper.map(document, DocumentDto.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DocumentTypeDto> getAllDocumentTypes() {
+        List<DocumentType> documentTypes=documentTypeRepository.findAll();
+
+        return documentTypes.stream().map(documentType -> modelMapper.map(documentType,DocumentTypeDto.class))
                 .collect(Collectors.toList());
     }
 
@@ -106,6 +176,9 @@ public class DocumentServiceImpl implements DocumentService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Department department = departmentRepository.findById(documentDTO.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        DocumentType documentType=documentTypeRepository.findById(documentDTO.getDocumentTypeId())
+                .orElseThrow(()->new RuntimeException("Document Type not found"));
         if (auth == null || !auth.isAuthenticated()) {
             System.out.println("Authentication failed");
             throw new RuntimeException("User is not authenticated");
@@ -123,25 +196,29 @@ public class DocumentServiceImpl implements DocumentService {
 
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("The given document id not found"));
-        System.out.println("Document found: " + document.getId());
+
         if (user.get().getName() == null) {
             System.out.println("User's name is null");
             throw new RuntimeException("User's name is null");
         }
 
         document.setTitle(documentDTO.getTitle());
-        System.out.println("Title set to: " + documentDTO.getTitle());
+
         document.setContent(documentDTO.getContent());
-        System.out.println("Content set to: " + documentDTO.getContent());
-        document.setStatus(Document.DocumentStatus.valueOf(documentDTO.getStatus().toUpperCase()));
-        System.out.println("Status set to: " + documentDTO.getStatus());
+
+        document.setApprovalStatus(Document.ApprovalStatus.valueOf(documentDTO.getApprovalStatus().toUpperCase()));
+
         document.setUpdatedDate(LocalDate.now());
         document.setUpdatedBy(user.get());
         document.setDocumentDepartment(department);
+        document.setDocumentType(documentType);
+        document.setIssueDate(documentDTO.getIssueDate());
+        document.setEffectiveDate(document.getEffectiveDate());
+        document.setReviewDate(document.getReviewDate());
 
         // Handle attachment updates
         List<Attachment> existingAttachments = attachmentRepository.findByDocumentId(id);
-        System.out.println("Existing attachments: " + existingAttachments.size());
+
 
         // If a new file is uploaded, delete the old attachments and save the new one
         if (file != null && !file.isEmpty()) {
@@ -169,4 +246,42 @@ public class DocumentServiceImpl implements DocumentService {
         return modelMapper.map(savedDocument, DocumentDto.class);
 
        }
+
+    @Override
+    public DocumentDetailsDto getDocumentDetails(Long documentId) {
+        // Fetch the document entity
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        // Fetch approval levels
+        List<ApprovalLevel> approvalLevels = approvalLevelRepository.findByDocument_Id(documentId);
+
+        // Convert approval levels to DTOs
+        List<DocumentApprovalLevelDto> approvalLevelDtos = approvalLevels.stream()
+                .map(level -> modelMapper.map(level,DocumentApprovalLevelDto.class
+
+                ))
+                .collect(Collectors.toList());
+
+        // Fetch approval workflows
+        List<ApprovalWorkflow> approvalWorkflows = documentApprovalWorkflowRepository.findByDocumentId(documentId);
+
+        // Convert workflows to DTOs
+        List<DocumentApprovalWorkFlowDto> workflowDtos = approvalWorkflows.stream()
+                .map(workflow -> modelMapper.map(workflow,DocumentApprovalWorkFlowDto.class)
+                ) .collect(Collectors.toList());
+
+        // Map document fields to DTO fields
+        return new DocumentDetailsDto(
+                document.getId(),
+                document.getTitle(),
+                document.getApprovalStatus().name(),
+                document.getCreatedBy().getName(), // Assuming createdBy is a User entity with a getName() method
+                document.getCreatedDate(),
+                document.getDocumentDepartment().getDepartName(), // Assuming department has a getName() method
+                document.getDocumentType().getDocumentType(),
+                approvalLevelDtos,
+                workflowDtos
+        );
+    }
 }

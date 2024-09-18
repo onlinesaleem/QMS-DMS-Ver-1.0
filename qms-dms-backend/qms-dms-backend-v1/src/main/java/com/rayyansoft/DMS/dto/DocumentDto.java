@@ -1,7 +1,10 @@
 package com.rayyansoft.DMS.dto;
 
+import com.rayyansoft.DMS.entity.ApprovalLevel;
 import com.rayyansoft.DMS.entity.Department;
+import com.rayyansoft.DMS.entity.DocumentType;
 import com.rayyansoft.DMS.entity.User;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,9 +21,24 @@ public class DocumentDto {
     private String title;
     private String content;
     private Long departmentId;
-    private String status;
+    private String approvalStatus;
     private String createdDate;
-//    private User createdBy;
+
+    private Long documentTypeId;
+
+    private String issueDate;
+
+
+    private String reviewDate;
+
+
+    private String effectiveDate;
+
+    //    private User createdBy;
     private List<AttachmentDto> attachments;
     private Department documentDepartment;
+
+    private DocumentType documentType;
+
+    private List<ListApprovalDto> approvalLevels;  // New relationship to ApprovalLevel
 }

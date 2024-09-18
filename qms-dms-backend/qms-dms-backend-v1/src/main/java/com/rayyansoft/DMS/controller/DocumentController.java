@@ -1,7 +1,9 @@
 package com.rayyansoft.DMS.controller;
 
 import com.rayyansoft.DMS.dto.AttachmentDto;
+import com.rayyansoft.DMS.dto.DocumentDetailsDto;
 import com.rayyansoft.DMS.dto.DocumentDto;
+import com.rayyansoft.DMS.dto.DocumentTypeDto;
 import com.rayyansoft.DMS.entity.Document;
 import com.rayyansoft.DMS.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,12 +58,23 @@ public class DocumentController {
         return documentService.getDocumentByDepartment(departmentId);
     }
 
+    @GetMapping("/document-types")
+    public List<DocumentTypeDto> getDocumentTypes(){
+        return  documentService.getAllDocumentTypes();
+    }
+
+
     @GetMapping
     public ResponseEntity<List<DocumentDto>> getAlldocuments() {
         List<DocumentDto> documentDtos = documentService.getAllDocumentes();
         return new ResponseEntity<>(documentDtos, HttpStatus.OK);
     }
 
+    @GetMapping("/{documentId}/details")
+    public ResponseEntity<DocumentDetailsDto> getDocumentDetails(@PathVariable Long documentId) {
+        DocumentDetailsDto documentDetails = documentService.getDocumentDetails(documentId);
+        return ResponseEntity.ok(documentDetails);
+    }
     @GetMapping("/document/{documentId}")
     public DocumentDto getDocumentById(@PathVariable Long documentId) {
         return documentService.getDocumentById(documentId);

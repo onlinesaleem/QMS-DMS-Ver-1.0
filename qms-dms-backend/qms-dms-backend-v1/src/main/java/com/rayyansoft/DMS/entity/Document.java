@@ -41,26 +41,47 @@ public class Document {
     @Column(name="updateDate")
     private LocalDate updatedDate;
 
+    @Column(name="issueDate")
+    private String issueDate;
+
+    @Column(name="reviewDate")
+    private String reviewDate;
+
+    @Column(name="effectiveDate")
+    private String effectiveDate;
+
     @Enumerated(EnumType.STRING)
-    @Column(name="status", nullable = false)
-    private DocumentStatus status;
+    @Column(name="approvalStatus", nullable = false)
+    private ApprovalStatus approvalStatus;
+
+
 
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
 
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ApprovalLevel> approvalLevels;  // New relationship to ApprovalLevel
+
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments;
-    public enum DocumentStatus {
-        DRAFT,
-        APPROVED,
-        ARCHIVED
+    public enum ApprovalStatus {
+        UNDER_REVIEW,
+        REVIEWED,
+       APPROVED,
+        REJECTED,
+        DRAFT
     }
 
     @ManyToOne
     @JoinColumn(name="departmentId", nullable=false)
     private Department documentDepartment;
+
+    @ManyToOne
+    @JoinColumn(name="documentTypeId",nullable = false)
+    private DocumentType documentType;
+
 
 
 }
