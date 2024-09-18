@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { DocumentDTO, createDocument, getDocumentById, updateDocument, getFileBlob } from '../../service/DocumentService';
+import { DocumentDTO, createDocument, getDocumentById, updateDocument, getFileBlob, getDocumentTypes } from '../../service/DocumentService';
 import { TemplateDTO, getTemplates, getTemplateById } from '../../service/TemplateService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -13,14 +13,20 @@ const DocumentForm: React.FC = () => {
     title: '',
     content: '',
     departmentId: 0,
-    status: 'DRAFT',
+    effectiveDate:'',
+    issueDate:'',
+    reviewDate:'',
+    approvalStatus: 'UNDER_REVIEW',
+    documentTypeId:0,
     attachments: [],
   });
   const [templates, setTemplates] = useState<TemplateDTO[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [departments, setDepartments] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [departmentId, setDepartmentId] = useState('');
+  const [documentTypeId, setDocumentTypeId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -39,6 +45,16 @@ const DocumentForm: React.FC = () => {
       }
     };
 
+    const documentTypes=async()=>{
+      try{
+        const response=await getDocumentTypes();
+        setDocumentTypes(response.data);
+
+      }catch(error){
+        console.error('Error fetching document types:',error);
+      }
+    }
+
     const deparmentList = async () => {
       try {
         const response = await departmentListAPI();
@@ -50,6 +66,7 @@ const DocumentForm: React.FC = () => {
 
     fetchTemplates();
     deparmentList();
+    documentTypes();
   }, []);
 
   useEffect(() => {
@@ -140,8 +157,11 @@ const DocumentForm: React.FC = () => {
         formData.append('title', document.title);
         formData.append('content', document.content);
         formData.append('departmentId',departmentId);
-        formData.append('status', document.status);
-
+        //formData.append('approvalStatus', document.approvalStatus);
+        formData.append('documentTypeId',documentTypeId);
+        formData.append('effectiveDate',document.effectiveDate);
+        formData.append('issueDate',document.issueDate);
+        formData.append('reviewDate',document.reviewDate)
         selectedFiles.forEach(file => {
             formData.append('file', file);
         });
@@ -231,6 +251,7 @@ const DocumentForm: React.FC = () => {
     return selectedDepartment ? selectedDepartment.departName : <em>Select Department</em>;
   }}
 >
+  
   <MenuItem disabled value="">
     <em>Select Department</em>
   </MenuItem>
@@ -242,11 +263,57 @@ const DocumentForm: React.FC = () => {
 </Select>
         </Box>
         <Box mb={2}>
+          <TextField type="date"
+            label="Effective Date"
+            name="effectiveDate"
+            value={document.effectiveDate}
+            onChange={handleInputChange}
+            required
+            fullWidth></TextField>
+        </Box>
+        <Box mb={2}>
+          <TextField type="date"
+            label="Issue Date"
+            name="issueDate"
+            value={document.issueDate}
+            onChange={handleInputChange}
+            required
+            fullWidth></TextField>
+        </Box>
+
+        <Box mb={2}>
+          <TextField type="date"
+            label="Review Date"
+            name="reviewDate"
+            value={document.reviewDate}
+            onChange={handleInputChange}
+            required
+            fullWidth></TextField>
+            </Box>
+
+    <Box mb={2}>
           <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>Document Type</InputLabel>
+            <Select
+              name="documentTypeId"
+              value={documentTypeId}
+              onChange={(e) => setDocumentTypeId(e.target.value)}
+              required
+            >
+              {documentTypes.map((documentType: any) => (
+                <MenuItem key={documentType.id} value={documentType.id}>{documentType.documentType}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          </Box>
+
+{/* 
+        <Box mb={2}>
+          <FormControl fullWidth>
+            <InputLabel>Approval Status</InputLabel>
             <Select
               name="status"
-              value={document.status}
+              value={document.approvalStatus}
               onChange={handleInputChange}
               required
             >
@@ -255,7 +322,7 @@ const DocumentForm: React.FC = () => {
               <MenuItem value="ARCHIVED">Archived</MenuItem>
             </Select>
           </FormControl>
-        </Box>
+        </Box> */}
         
         {id && (
           <Box mb={2}>

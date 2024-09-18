@@ -47,9 +47,13 @@ const DocumentDetails: React.FC = () => {
         <Box mb={2}>
           
          
-          <Typography variant="subtitle1">Status: {document.status}</Typography>
+          <Typography variant="subtitle1">Status: {document.approvalStatus}</Typography>
           <Typography variant="subtitle1">Created By: {document.createdBy?.username}</Typography>
           <Typography variant="subtitle1">Created Date: {document.createdDate}</Typography>
+          <Typography variant="subtitle1">Effective Date: {document.effectiveDate}</Typography>
+          <Typography variant="subtitle1">Issue Date: {document.issueDate}</Typography>
+          <Typography variant="subtitle1">Review Date: {document.reviewDate}</Typography>
+          <Typography variant="subtitle1">Type of Documents: {document.documentType.documentType}</Typography>
           <Typography variant="subtitle1">
     Department Name: {document.documentDepartment.departName}
 </Typography>

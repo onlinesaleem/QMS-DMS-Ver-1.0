@@ -99,6 +99,57 @@ export const GetMenuItems = (): MenuItem[] => {
       ]
     },
     {
+      label: "Doc Management",
+      icon: <PermDeviceInformationTwoToneIcon />,
+      items: [
+        {
+          label: "Create Document",
+          icon: <GradingTwoToneIcon />,
+          onClick: () => navigate("/documents/new")
+        },
+        {
+          label: "Manage Documents",
+          icon: <AssessmentTwoToneIcon />,
+          onClick: () => navigate("/doc-management"),
+          //visible: isQualityUser()
+        },
+        {
+          label: "View Documents",
+          icon: <AssessmentTwoToneIcon />,
+          onClick: () => navigate("/documents"),
+          //visible: isQualityUser()
+        },
+        {
+          label: "Quality Templates",
+          icon: <AssessmentTwoToneIcon />,
+          onClick: () => navigate("/templates"),
+          //visible: isQualityUser()
+        },
+        {
+          label: "Document Templates",
+          icon: <FeedTwoToneIcon />,
+          onClick: () => navigate("/templates")
+        },
+      
+        {
+          label: "Document Approvals",
+          icon: <AssessmentTwoToneIcon />,
+          onClick: () => navigate("/approval-list"),
+         // visible: isQualityUser()
+        },
+       
+  
+        {
+          label: "Quality Standards",
+          icon: <AssessmentTwoToneIcon />,
+          onClick: () => navigate("/quality-standards"),
+         // visible: isQualityUser()
+        },
+   
+      
+      ]
+    },
+    {
       label: "Task",
       icon: <AddTaskTwoToneIcon />,
       items: taskSubMenuItems,

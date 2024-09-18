@@ -35,6 +35,9 @@ import TemplateDetails from './component/Document/TemplateDetails';
 import DocumentList from './component/Document/DocumentList';
 import DocumentForm from './component/Document/DocumentForm';
 import DocumentDetails from './component/Document/DocumentDetails';
+import DocumentDataGrid from './component/Document/DocumentDataGrid';
+import ApprovalList from './component/Document/Approval/ApprovalList';
+import DocumentDetailsById from './component/Document/DocumentDetailsById';
 
 
 const theme = createTheme({
@@ -102,9 +105,12 @@ function App() {
         <Route path="/templates/new" element={<TemplateForm />} />
         <Route path="/templates/:id" element={<TemplateDetails />} />
         <Route path="/documents" element={<DocumentList />} />
+        <Route path="/doc-management" element={<DocumentDataGrid />} />
         <Route path="/documents/new" element={<DocumentForm />} />
         <Route path="/documents/:id" element={<DocumentDetails />} />
         <Route path="/documents/:id/edit" element={<DocumentForm />} />
+        <Route path="/documents/:documentId/details" element={<DocumentDetailsById />} />
+        <Route path="/documents/approval-list" element={<ApprovalList />} />
         
               </Routes>
             </Box>

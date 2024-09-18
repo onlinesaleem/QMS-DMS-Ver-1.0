@@ -30,34 +30,50 @@ export interface AttachmentDTO {
 }
 
 export interface DocumentDTO {
-    status: string;
+    
     id?: number;
     title: string;
     content: string;
     departmentId:number;
+    documentTypeId:number;
+    effectiveDate:string;
+    approvalStatus:string;
+    issueDate:string;
+    reviewDate:string;
     createdBy?: any;
     createdDate?: string;
     updatedBy?: any;
     updatedDate?: string;
     attachments?: AttachmentDTO[];
     documentDepartment?:Department;
+    documentType?:DocumentType
+
 }
+
 
 export interface Department {
     
     id?: number;
-     
     active?:number;
     departName:string;
-
     
 }
+
+export interface DocumentType{
+    id?:number;
+    active?:number;
+    documentType:string;
+}
+
+// Remove incomplete interface declaration
+
+export const getDocumentDetailsById=(documentId:number)=>axios.get(`${BASE_REST_API_URL}/${documentId}/details`);
 
 export const getDocuments = () => axios.get(BASE_REST_API_URL);
 
 export const getDocumentById = (id: number) => axios.get(`${BASE_REST_API_URL}/document/${id}`);
 
-
+export const getDocumentTypes=()=>axios.get(`${BASE_REST_API_URL}/document-types`);
 export const uploadFile = (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

@@ -154,7 +154,7 @@ export const Header = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            OVR System
+          QMS
           </Typography>
 
           <Tooltip title="Open settings">
