@@ -22,5 +22,7 @@ public interface DocumentApprovalWorkflowService {
 
     void updateApprovalStatus(Long approvalLevelId,DocumentApprovalLevelDto documentApprovalLevelDto);
 
-    void updateDocumentStatusIfAllApproved(Long documentId);
+   void resetRejectedApprovalLevel(Long documentId,String comments);
+
+
 }

@@ -1,6 +1,7 @@
 package com.rayyansoft.DMS.service;
 
 import com.rayyansoft.DMS.dto.*;
+import com.rayyansoft.DMS.entity.Attachment;
 import com.rayyansoft.DMS.entity.Document;
 import com.rayyansoft.DMS.entity.DocumentType;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,5 +25,7 @@ public interface DocumentService {
     DocumentDto updateDocument(Long id, DocumentDto documentDTO, MultipartFile file) throws IOException;
 
     DocumentDetailsDto getDocumentDetails(Long documentId);
+
+     Attachment handleFileUpload(MultipartFile file, Document document) throws IOException;
 
 }

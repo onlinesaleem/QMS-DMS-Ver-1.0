@@ -64,24 +64,12 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Handle file attachment (if provided)
         // Handle file attachment (if provided)
-        if (file != null) {
-            // Generate a unique file name
-            String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            String filePath = "D:/uploads/" + uniqueFileName;
 
-            // Save the file to the folder
-            java.io.File targetFile = new java.io.File(filePath);
-            file.transferTo(targetFile);
-
-            // Create the File entity and set the details
-            Attachment attachmentEntity = new Attachment();
-            attachmentEntity.setFileName(uniqueFileName); // Save the unique file name
-            attachmentEntity.setFilePath(filePath);
-            attachmentEntity.setUploadDate(new Date());
-            attachmentEntity.setDocument(document); // Associate the File with the Document
-
-            document.setAttachments(Collections.singletonList(attachmentEntity)); // Set the file(s) for the Document
+        if (file != null && !file.isEmpty()) {
+            Attachment attachmentEntity = handleFileUpload(file, document);
+            document.setAttachments(Collections.singletonList(attachmentEntity)); // Set the file(s) for the document
         }
+
 
 
 
@@ -171,43 +159,33 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentDto updateDocument(Long id, DocumentDto documentDTO, MultipartFile file) throws IOException {
-        System.out.println("Entered updateDocument method" + id);
+        System.out.println("Entered updateDocument method: " + id);
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Department department = departmentRepository.findById(documentDTO.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
-        DocumentType documentType=documentTypeRepository.findById(documentDTO.getDocumentTypeId())
-                .orElseThrow(()->new RuntimeException("Document Type not found"));
+        DocumentType documentType = documentTypeRepository.findById(documentDTO.getDocumentTypeId())
+                .orElseThrow(() -> new RuntimeException("Document Type not found"));
+
         if (auth == null || !auth.isAuthenticated()) {
             System.out.println("Authentication failed");
             throw new RuntimeException("User is not authenticated");
         }
-        System.out.println("Authentication successful");
 
         Optional<User> user = userRepository.findByUsername(auth.getName());
 
-        System.out.println("Retrieved user: " + auth.getName());
         if (!user.isPresent()) {
             System.out.println("User not found with username: " + auth.getName());
-
             throw new UsernameNotFoundException("User not found");
         }
 
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("The given document id not found"));
 
-        if (user.get().getName() == null) {
-            System.out.println("User's name is null");
-            throw new RuntimeException("User's name is null");
-        }
-
         document.setTitle(documentDTO.getTitle());
-
         document.setContent(documentDTO.getContent());
-
         document.setApprovalStatus(Document.ApprovalStatus.valueOf(documentDTO.getApprovalStatus().toUpperCase()));
-
         document.setUpdatedDate(LocalDate.now());
         document.setUpdatedBy(user.get());
         document.setDocumentDepartment(department);
@@ -219,21 +197,38 @@ public class DocumentServiceImpl implements DocumentService {
         // Handle attachment updates
         List<Attachment> existingAttachments = attachmentRepository.findByDocumentId(id);
 
-
         // If a new file is uploaded, delete the old attachments and save the new one
         if (file != null && !file.isEmpty()) {
-            // Delete existing attachments
+            // Delete existing attachments from both the file system and database
+            for (Attachment attachment : existingAttachments) {
+                java.io.File existingFile = new java.io.File(attachment.getFilePath());
+                if (existingFile.exists()) {
+                    if (existingFile.delete()) {
+                        System.out.println("Deleted existing file: " + attachment.getFilePath());
+                        // Remove the attachment from the database
+                        attachmentRepository.delete(attachment);
+                        System.out.println("Deleted attachment record from database: " + attachment.getFileName());
+                    } else {
+                        System.out.println("Failed to delete existing file: " + attachment.getFilePath());
+                    }
+                } else {
+                    System.out.println("File not found, skipping deletion: " + attachment.getFilePath());
+                    // Still remove the attachment record from the database even if the file isn't found
+                    attachmentRepository.delete(attachment);
+                    System.out.println("Deleted attachment record from database: " + attachment.getFileName());
+                }
+            }
+
+            // Save the new file
             String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             String filePath = "D:/uploads/" + uniqueFileName;
-            attachmentRepository.deleteByDocumentId(id);
-            System.out.println("Deleted existing attachments for document ID: " + id);
-            // Save the file to the folder
             java.io.File targetFile = new java.io.File(filePath);
             file.transferTo(targetFile);
+
             // Save the new attachment
             Attachment newAttachment = new Attachment();
             newAttachment.setFileName(uniqueFileName);
-            newAttachment.setFilePath(filePath); // Update with your file path logic
+            newAttachment.setFilePath(filePath);
             newAttachment.setUploadDate(new Date());
             newAttachment.setDocument(document);
             attachmentRepository.save(newAttachment);
@@ -244,7 +239,6 @@ public class DocumentServiceImpl implements DocumentService {
 
         Document savedDocument = documentRepository.save(document);
         return modelMapper.map(savedDocument, DocumentDto.class);
-
        }
 
     @Override
@@ -283,5 +277,25 @@ public class DocumentServiceImpl implements DocumentService {
                 approvalLevelDtos,
                 workflowDtos
         );
+    }
+
+    @Override
+    public Attachment handleFileUpload(MultipartFile file, Document document) throws IOException {
+        // Generate a unique file name
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        String filePath = "D:/uploads/" + uniqueFileName;
+
+        // Save the file to the folder
+        java.io.File targetFile = new java.io.File(filePath);
+        file.transferTo(targetFile);
+
+        // Create the Attachment entity
+        Attachment attachment = new Attachment();
+        attachment.setFileName(uniqueFileName); // Save the unique file name
+        attachment.setFilePath(filePath);
+        attachment.setUploadDate(new Date());
+        attachment.setDocument(document); // Associate the file with the document
+
+        return attachment;
     }
 }

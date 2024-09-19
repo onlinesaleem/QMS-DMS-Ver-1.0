@@ -111,13 +111,61 @@ public class DocumentApprovalWorkflowServiceImpl implements DocumentApprovalWork
         workflow.setComments(documentApprovalLevelDto.getComments());
 
         documentApprovalWorkflowRepository.save(workflow);
-        // Check if all approvals are complete and update document status
-        updateDocumentStatusIfAllApproved(approvalLevel.getDocument().getId());
 
+        // If rejected, stop further approvals and update document status to REJECTED
+        if (approvalLevel.getStatus() == ApprovalLevel.ApprovalStatus.REJECTED) {
+            handleRejection(approvalLevel);
+        } else {
+            // Only call this method if not rejected
+            updateDocumentStatusBasedOnCurrentLevels(approvalLevel.getDocument().getId());
+        }
     }
 
     @Override
-    public void updateDocumentStatusIfAllApproved(Long documentId) {
+    public void resetRejectedApprovalLevel(Long documentId,String comments) {
+        List<ApprovalLevel> approvalLevels = approvalLevelRepository.findByDocument_Id(documentId);
+
+        // Find the rejected level
+        ApprovalLevel rejectedLevel = approvalLevels.stream()
+                .filter(level -> level.getStatus() == ApprovalLevel.ApprovalStatus.REJECTED)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No rejected level found"));
+
+        // Reset rejected level to pending, clear previous comments
+        rejectedLevel.setStatus(ApprovalLevel.ApprovalStatus.PENDING);
+        rejectedLevel.setComments(comments);
+        rejectedLevel.setTimestamp(LocalDateTime.now());
+        approvalLevelRepository.save(rejectedLevel);
+
+        // Check if any other approval levels are still rejected
+        boolean anyRejected = approvalLevels.stream()
+                .anyMatch(level -> level.getStatus() == ApprovalLevel.ApprovalStatus.REJECTED);
+
+        if (!anyRejected) {
+            // If no levels are rejected, update the document status to UNDER_REVIEW
+            Document document = documentRepository.findById(documentId)
+                    .orElseThrow(() -> new RuntimeException("Document not found"));
+
+            document.setApprovalStatus(Document.ApprovalStatus.UNDER_REVIEW);
+            documentRepository.save(document);
+        }
+
+        // Optionally notify the approver for reapproval or other notifications
+        // notifyApproverForReapproval(rejectedLevel.getApprover(), rejectedLevel);
+    }
+
+    private void handleRejection(ApprovalLevel rejectedLevel) {
+        Document document = rejectedLevel.getDocument();
+        document.setApprovalStatus(Document.ApprovalStatus.REJECTED);
+        System.out.println("Document ID: " + document.getId() + " status set to REJECTED.");
+        documentRepository.save(document);
+
+        // Optionally notify the document creator about rejection with comments (notification logic)
+        //notifyCreatorAboutRejection(document.getCreatedBy(), rejectedLevel);
+    }
+
+
+    public void updateDocumentStatusBasedOnCurrentLevels(Long documentId) {
 
         // Fetch all approval levels for the given document
         List<ApprovalLevel> approvalLevels = approvalLevelRepository.findByDocument_Id(documentId);
@@ -138,10 +186,16 @@ public class DocumentApprovalWorkflowServiceImpl implements DocumentApprovalWork
             document.setApprovalStatus(Document.ApprovalStatus.APPROVED);  // Final level approved
         } else if (anyRejected) {
             document.setApprovalStatus(Document.ApprovalStatus.REJECTED);  // If any level rejected
+        }else {
+            // If not all levels are approved yet, keep status as UNDER_REVIEW
+            document.setApprovalStatus(Document.ApprovalStatus.UNDER_REVIEW);
         }
 
         documentRepository.save(document);
     }
 
-    }
+
+
+
+}
 

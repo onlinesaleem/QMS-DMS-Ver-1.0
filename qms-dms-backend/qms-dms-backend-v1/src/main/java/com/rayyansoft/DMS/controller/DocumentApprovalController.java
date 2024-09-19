@@ -62,5 +62,10 @@ public class DocumentApprovalController {
         return ResponseEntity.ok("Record saved");
     }
 
+    @PostMapping("/documents/{documentId}/reset-rejected")
+    public ResponseEntity<Void> resetRejectedApproval(@PathVariable Long documentId, @RequestBody String comments) {
+        documentApprovalWorkflowService.resetRejectedApprovalLevel(documentId,comments);
+        return ResponseEntity.ok().build();
+    }
 
 }

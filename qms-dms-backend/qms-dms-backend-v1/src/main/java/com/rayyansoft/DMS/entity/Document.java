@@ -71,7 +71,8 @@ public class Document {
         REVIEWED,
        APPROVED,
         REJECTED,
-        DRAFT
+        DRAFT,
+        REVISION_REQUIRED
     }
 
     @ManyToOne
@@ -82,6 +83,22 @@ public class Document {
     @JoinColumn(name="documentTypeId",nullable = false)
     private DocumentType documentType;
 
+    @Column(name = "revisionNumber", nullable = false)
+    private int revisionNumber = 1;
 
+    @Column(name = "rejectionReason")
+    private String rejectionReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resubmissionStatus", nullable = false)
+    private ResubmissionStatus resubmissionStatus = ResubmissionStatus.NONE;
+
+    @Column(name = "approvalCycleCount", nullable = false)
+    private int approvalCycleCount = 0;
+    public enum ResubmissionStatus {
+        NONE,
+        RESUBMITTED,
+        UNDER_REVISION
+    }
 
 }
