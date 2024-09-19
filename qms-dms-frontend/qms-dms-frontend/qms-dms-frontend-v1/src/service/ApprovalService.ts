@@ -36,3 +36,5 @@ export const getPendingApprovals = async (userId: number) => axios.get(`${BASE_R
 
 export const updateApprovalStatus=async (approvalLevelId: number, documentApprovalLevel:documentApprovalLevelDto)=>axios.put(`${BASE_REST_API_URL}/approvals/${approvalLevelId}`,documentApprovalLevel)
 
+export const resetRejectDocument=async(documentId:number,comments:string)=>axios.post(`${BASE_REST_API_URL}/documents/${documentId}/reset-rejected`,comments);
+

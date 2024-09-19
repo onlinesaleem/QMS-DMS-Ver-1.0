@@ -134,7 +134,7 @@ export const GetMenuItems = (): MenuItem[] => {
         {
           label: "Document Approvals",
           icon: <AssessmentTwoToneIcon />,
-          onClick: () => navigate("/approval-list"),
+          onClick: () => navigate("/documents/approval-list"),
          // visible: isQualityUser()
         },
        

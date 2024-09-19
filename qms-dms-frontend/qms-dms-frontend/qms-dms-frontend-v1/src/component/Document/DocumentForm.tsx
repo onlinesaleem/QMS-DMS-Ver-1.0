@@ -157,7 +157,7 @@ const DocumentForm: React.FC = () => {
         formData.append('title', document.title);
         formData.append('content', document.content);
         formData.append('departmentId',departmentId);
-        //formData.append('approvalStatus', document.approvalStatus);
+        formData.append('approvalStatus', document.approvalStatus);
         formData.append('documentTypeId',documentTypeId);
         formData.append('effectiveDate',document.effectiveDate);
         formData.append('issueDate',document.issueDate);
@@ -286,6 +286,16 @@ const DocumentForm: React.FC = () => {
             label="Review Date"
             name="reviewDate"
             value={document.reviewDate}
+            onChange={handleInputChange}
+            required
+            fullWidth></TextField>
+            </Box>
+
+            <Box mb={2}>
+          <TextField type="text"
+            label="Approval status"
+            name="approvalStatus"
+            value={document.approvalStatus}
             onChange={handleInputChange}
             required
             fullWidth></TextField>

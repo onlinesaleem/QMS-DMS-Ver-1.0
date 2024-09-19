@@ -1,22 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { getPendingApprovals, updateApprovalStatus } from '../../../service/ApprovalService';
 import { findUserIdByUsernameAPI } from '../../../service/UserService';
-import { Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, Typography, TextField } from '@mui/material';
+import { Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, Typography, TextField, Link } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-// Styled component for the table container
-const StyledTableContainer = styled(TableContainer)({
-    marginTop: '20px',
-    padding: '20px',
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-});
+// Styled component for table header cells
+const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+    padding: '10px',
+}));
+
+// Styled component for table rows
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+    '&:nth-of-type(odd)': {
+        backgroundColor: theme.palette.action.hover,
+    },
+}));
+
+// Styled typography for title
+const TitleTypography = styled(Typography)(({ theme }) => ({
+    fontWeight: 'bold',
+    color: theme.palette.success.main,
+    textTransform: 'uppercase',
+    marginBottom: '20px',
+}));
 
 const ApprovalList = () => {
     const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
     const [_userId, setUserId] = useState(0);
     const [page, setPage] = useState(1);
-    const [comments, setComments] = useState('');
-    
+    const [commentsMap, setCommentsMap] = useState<{ [key: number]: string }>({});
+
     const itemsPerPage = 5;
 
     useEffect(() => {
@@ -34,27 +50,29 @@ const ApprovalList = () => {
         fetchPendingApprovals(response.data);
     };
 
- 
     // Pagination handler
     const handleChangePage = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
     };
 
+    // Update comments for each approval
+    const handleCommentChange = (approvalId: number, value: string) => {
+        setCommentsMap((prevCommentsMap) => ({
+            ...prevCommentsMap,
+            [approvalId]: value,
+        }));
+    };
+
     // Approval action (approve/reject)
     const handleApprovalAction = async (approval: any, action: 'approve' | 'reject') => {
-
-        
         const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
-       
-
-        const documentApprovalLevelDto = { comments, status };
+        const documentApprovalLevelDto = { comments: commentsMap[approval.id] || '', status };
 
         try {
-            // Call the updateApprovalStatus API with the approval level ID and DTO
+            // Call API to update the status
             await updateApprovalStatus(approval.id, documentApprovalLevelDto);
-            console.log(`Approval ID ${approval.id} was ${status}`);
             
-            // Optimistically update the UI
+            // Optimistically update the UI by updating the status in the state
             setPendingApprovals((prevApprovals) =>
                 prevApprovals.map((item) =>
                     item.id === approval.id ? { ...item, status } : item
@@ -66,29 +84,35 @@ const ApprovalList = () => {
     };
 
     return (
-        <Grid container justifyContent="center">
-            <Grid item xs={12} md={8}>
-                <Typography variant="h4" gutterBottom align="center">
+        <Grid container justifyContent="center" style={{ padding: '40px' }}>
+            <Grid item xs={12} md={10}>
+                <TitleTypography variant="h4" align="center">
                     Pending Approvals
-                </Typography>
+                </TitleTypography>
 
-                <StyledTableContainer as={Paper}>
+                <TableContainer component={Paper} sx={{ marginTop: '20px', padding: '20px', boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell align="left">Document Title</TableCell>
-                                <TableCell align="left">Approval Level</TableCell>
-                                <TableCell align="left">Status</TableCell>
-                                <TableCell align="left">Comments</TableCell>
-                                <TableCell align="left">Actions</TableCell>
+                                <StyledTableHeadCell align="left">Document Title</StyledTableHeadCell>
+                                <StyledTableHeadCell align="left">Document Type</StyledTableHeadCell>
+                                <StyledTableHeadCell align="left">Approval Level</StyledTableHeadCell>
+                                <StyledTableHeadCell align="left">Status</StyledTableHeadCell>
+                                <StyledTableHeadCell align="left">Comments</StyledTableHeadCell>
+                                <StyledTableHeadCell align="left">Actions</StyledTableHeadCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {pendingApprovals
                                 .slice((page - 1) * itemsPerPage, page * itemsPerPage)
                                 .map((approval) => (
-                                    <TableRow key={approval.id}>
-                                        <TableCell>{approval.document.title}</TableCell>
+                                    <StyledTableRow key={approval.id}>
+                                        <TableCell>
+                                            <Link href={`/documents/${approval.document.id}`} style={{ textDecoration: 'none', color: '#1976d2' }}>
+                                                {approval.document.title}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{approval.document.documentType}</TableCell>
                                         <TableCell>{approval.level}</TableCell>
                                         <TableCell>{approval.status}</TableCell>
                                         <TableCell>
@@ -97,8 +121,8 @@ const ApprovalList = () => {
                                                 placeholder="Add comments"
                                                 variant="outlined"
                                                 size="small"
-                                                value={comments}
-                                                onChange={(e) => setComments(e.target.value)}
+                                                value={commentsMap[approval.id] || ''}
+                                                onChange={(e) => handleCommentChange(approval.id, e.target.value)}
                                             />
                                         </TableCell>
                                         <TableCell>
@@ -122,11 +146,11 @@ const ApprovalList = () => {
                                                 Reject
                                             </Button>
                                         </TableCell>
-                                    </TableRow>
+                                    </StyledTableRow>
                                 ))}
                         </TableBody>
                     </Table>
-                </StyledTableContainer>
+                </TableContainer>
 
                 {/* Pagination Component */}
                 <Grid container justifyContent="center" style={{ marginTop: '20px' }}>
