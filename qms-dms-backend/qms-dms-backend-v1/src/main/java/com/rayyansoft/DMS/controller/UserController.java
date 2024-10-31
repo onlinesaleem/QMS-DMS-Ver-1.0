@@ -1,10 +1,13 @@
 package com.rayyansoft.DMS.controller;
 
+import com.rayyansoft.DMS.dto.UserSummaryDto;
 import com.rayyansoft.DMS.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @CrossOrigin("*")
@@ -25,6 +28,10 @@ public class UserController {
     }
 
 
-
+    @GetMapping("/userSummary")
+    public ResponseEntity<?> findUserSummary(){
+        List<UserSummaryDto> userSummaryDtoList=userService.findAllUserSummary();
+        return  ResponseEntity.ok(userSummaryDtoList);
+    }
 
 }

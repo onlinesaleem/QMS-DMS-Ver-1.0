@@ -1,5 +1,6 @@
 package com.rayyansoft.DMS.service.Impl;
 
+import com.rayyansoft.DMS.dto.UserSummaryDto;
 import com.rayyansoft.DMS.entity.User;
 import com.rayyansoft.DMS.repository.UserRepository;
 import com.rayyansoft.DMS.service.UserService;
@@ -8,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,6 +30,12 @@ public class UserServiceImpl implements UserService {
 
         Long userId=user.get().getId();
         return userId;
+    }
+
+    @Override
+    public List<UserSummaryDto> findAllUserSummary() {
+        List<UserSummaryDto> userSummaryDtoList=userRepository.findUserSummary();
+        return userSummaryDtoList;
     }
 
 

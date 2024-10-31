@@ -1,17 +1,8 @@
 package com.rayyansoft.DMS.service.Impl;
 
-import com.rayyansoft.DMS.dto.DocumentApprovalLevelDto;
-import com.rayyansoft.DMS.dto.DocumentApprovalUserDto;
-import com.rayyansoft.DMS.dto.DocumentApprovalWorkFlowDto;
-import com.rayyansoft.DMS.dto.DocumentDto;
-import com.rayyansoft.DMS.entity.ApprovalLevel;
-import com.rayyansoft.DMS.entity.ApprovalWorkflow;
-import com.rayyansoft.DMS.entity.Document;
-import com.rayyansoft.DMS.entity.DocumentApprovalUser;
-import com.rayyansoft.DMS.repository.ApprovalLevelRepository;
-import com.rayyansoft.DMS.repository.DocumentApprovalUserRepository;
-import com.rayyansoft.DMS.repository.DocumentApprovalWorkflowRepository;
-import com.rayyansoft.DMS.repository.DocumentRepository;
+import com.rayyansoft.DMS.dto.*;
+import com.rayyansoft.DMS.entity.*;
+import com.rayyansoft.DMS.repository.*;
 import com.rayyansoft.DMS.service.DocumentApprovalWorkflowService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -28,6 +19,8 @@ public class DocumentApprovalWorkflowServiceImpl implements DocumentApprovalWork
     private DocumentApprovalUserRepository documentApprovalUserRepository;
 
     private ApprovalLevelRepository approvalLevelRepository;
+
+    private UserRepository userRepository;
 
     private DocumentApprovalWorkflowRepository documentApprovalWorkflowRepository;
 
@@ -152,6 +145,50 @@ public class DocumentApprovalWorkflowServiceImpl implements DocumentApprovalWork
 
         // Optionally notify the approver for reapproval or other notifications
         // notifyApproverForReapproval(rejectedLevel.getApprover(), rejectedLevel);
+    }
+
+    @Override
+    public List<DocumentApprovalUserSummaryDto> findAllApprovalUser() {
+        List<DocumentApprovalUserSummaryDto> documentApprovalUsers=documentApprovalUserRepository.findApproverUserAll();
+        return documentApprovalUsers;
+    }
+
+    @Override
+    public DocumentApprovalUserDto createApprovalUser(DocumentApprovalUserDto documentApprovalUserDto) {
+        DocumentApprovalUser documentApprovalUser;
+
+        // Check if ID exists to determine whether to update or create
+        if (documentApprovalUserDto.getId() != null) {
+            // Load existing approval user for update
+            documentApprovalUser = documentApprovalUserRepository.findById(documentApprovalUserDto.getId())
+                    .orElseThrow(() -> new RuntimeException("Approval User not found"));
+        } else {
+            // If creating a new record, check for duplicates
+            boolean duplicateExists = documentApprovalUserRepository.existsByUserIdAndApproverType(
+                    documentApprovalUserDto.getUserId(),
+                    DocumentApprovalUser.ApproverType.valueOf(documentApprovalUserDto.getApproverType())
+            );
+            if (duplicateExists) {
+                throw new RuntimeException("Duplicate entry: This user already has the same approval type.");
+            }
+            // Create a new approval user if no duplicate exists
+            documentApprovalUser = new DocumentApprovalUser();
+        }
+
+        // Load User by userId
+        User user = userRepository.findById(documentApprovalUserDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        documentApprovalUser.setUser(user);
+
+        // Set fields for new or existing record
+        documentApprovalUser.setApproverType(DocumentApprovalUser.ApproverType.valueOf(documentApprovalUserDto.getApproverType()));
+        documentApprovalUser.setActive(documentApprovalUserDto.isActive());
+
+        // Save the approval user
+        DocumentApprovalUser savedDocumentApprovalUser = documentApprovalUserRepository.save(documentApprovalUser);
+
+        // Map and return DTO
+        return modelMapper.map(savedDocumentApprovalUser, DocumentApprovalUserDto.class);
     }
 
     private void handleRejection(ApprovalLevel rejectedLevel) {

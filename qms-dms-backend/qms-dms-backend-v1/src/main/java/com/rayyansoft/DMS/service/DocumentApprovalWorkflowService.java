@@ -1,8 +1,6 @@
 package com.rayyansoft.DMS.service;
 
-import com.rayyansoft.DMS.dto.DocumentApprovalLevelDto;
-import com.rayyansoft.DMS.dto.DocumentApprovalUserDto;
-import com.rayyansoft.DMS.dto.DocumentApprovalWorkFlowDto;
+import com.rayyansoft.DMS.dto.*;
 import com.rayyansoft.DMS.entity.ApprovalLevel;
 import com.rayyansoft.DMS.entity.DocumentApprovalUser;
 
@@ -24,5 +22,9 @@ public interface DocumentApprovalWorkflowService {
 
    void resetRejectedApprovalLevel(Long documentId,String comments);
 
+   List<DocumentApprovalUserSummaryDto> findAllApprovalUser();
+
+
+    public DocumentApprovalUserDto createApprovalUser(DocumentApprovalUserDto documentApprovalUserDto);
 
 }

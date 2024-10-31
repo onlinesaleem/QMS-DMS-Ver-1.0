@@ -72,7 +72,8 @@ public class Document {
        APPROVED,
         REJECTED,
         DRAFT,
-        REVISION_REQUIRED
+        REVISION_REQUIRED,
+
     }
 
     @ManyToOne

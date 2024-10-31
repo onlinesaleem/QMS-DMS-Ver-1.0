@@ -28,6 +28,7 @@ public class DocumentApprovalUser {
     private ApproverType approverType;
 
     public enum ApproverType{
+        Doc_Preparedby,
         Doc_Reviewer,
         Doc_Approver,
         Executive

@@ -2,6 +2,7 @@ package com.rayyansoft.DMS.controller;
 
 import com.rayyansoft.DMS.dto.DocumentApprovalLevelDto;
 import com.rayyansoft.DMS.dto.DocumentApprovalUserDto;
+import com.rayyansoft.DMS.dto.DocumentApprovalUserSummaryDto;
 import com.rayyansoft.DMS.dto.DocumentApprovalWorkFlowDto;
 import com.rayyansoft.DMS.entity.ApprovalLevel;
 import com.rayyansoft.DMS.entity.DocumentApprovalUser;
@@ -66,6 +67,18 @@ public class DocumentApprovalController {
     public ResponseEntity<Void> resetRejectedApproval(@PathVariable Long documentId, @RequestBody String comments) {
         documentApprovalWorkflowService.resetRejectedApprovalLevel(documentId,comments);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/approvals/users")
+    public  List<DocumentApprovalUserSummaryDto> getAllApprovalUsers(){
+        return documentApprovalWorkflowService.findAllApprovalUser();
+    }
+
+    @PostMapping("/approval/userSetting")
+    public ResponseEntity<DocumentApprovalUserDto> saveApprovalUser(@RequestBody DocumentApprovalUserDto documentApprovalUserDto)
+    {
+        DocumentApprovalUserDto saveDocumentApprovalUserDto=documentApprovalWorkflowService.createApprovalUser(documentApprovalUserDto);
+    return ResponseEntity.ok(saveDocumentApprovalUserDto);
     }
 
 }

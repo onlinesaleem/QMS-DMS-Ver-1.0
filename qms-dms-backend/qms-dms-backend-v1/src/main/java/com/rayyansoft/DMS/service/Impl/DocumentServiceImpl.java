@@ -89,9 +89,11 @@ public class DocumentServiceImpl implements DocumentService {
         int level = 1;
         for (DocumentApprovalUserDto approverDto : approvers) {
             // Create and set approval level details
+            User user = userRepository.findById(approverDto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             ApprovalLevel approvalLevel = new ApprovalLevel();
             approvalLevel.setDocument(savedDocument);
-            approvalLevel.setApprover(approverDto.getUser()); // Map the DTO to the entity
+            approvalLevel.setApprover(user); // Map the DTO to the entity
             approvalLevel.setLevel(level);
             approvalLevel.setStatus(ApprovalLevel.ApprovalStatus.PENDING);
             approvalLevel.setTimestamp(LocalDateTime.now());

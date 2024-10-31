@@ -26,6 +26,8 @@ public interface DocumentService {
 
     DocumentDetailsDto getDocumentDetails(Long documentId);
 
-     Attachment handleFileUpload(MultipartFile file, Document document) throws IOException;
+    Attachment handleFileUpload(MultipartFile file, Document document) throws IOException;
+
+
 
 }

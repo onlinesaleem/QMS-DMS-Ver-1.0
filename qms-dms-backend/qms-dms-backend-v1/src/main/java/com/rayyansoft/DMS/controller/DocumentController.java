@@ -50,6 +50,7 @@ public class DocumentController {
 
         // Create the document along with file information
         DocumentDto document = documentService.createDocument(documentDto, attachmentDto,file);
+        System.out.println("the approval information is"+document.getApprovalStatus());
         return ResponseEntity.ok(document);
     }
 
