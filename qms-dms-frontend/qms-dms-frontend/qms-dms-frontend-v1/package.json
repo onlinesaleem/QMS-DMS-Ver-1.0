@@ -11,12 +11,12 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.0",
+    "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fontsource/roboto": "^5.0.8",
-    "@mui/icons-material": "^5.15.3",
+    "@mui/icons-material": "^5.16.7",
     "@mui/lab": "^5.0.0-alpha.167",
-    "@mui/material": "^5.16.6",
+    "@mui/material": "^5.16.7",
     "@mui/styled-engine-sc": "^6.0.0-alpha.13",
     "@mui/x-charts": "^6.19.5",
     "@mui/x-data-grid": "^6.19.2",

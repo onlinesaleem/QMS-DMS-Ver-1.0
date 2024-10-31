@@ -38,6 +38,8 @@ import DocumentDetails from './component/Document/DocumentDetails';
 import DocumentDataGrid from './component/Document/DocumentDataGrid';
 import ApprovalList from './component/Document/Approval/ApprovalList';
 import DocumentDetailsById from './component/Document/DocumentDetailsById';
+import ApprovalUserForm from './component/Document/Approval/ApprovalUserForm';
+
 
 
 const theme = createTheme({
@@ -111,6 +113,7 @@ function App() {
         <Route path="/documents/:id/edit" element={<DocumentForm />} />
         <Route path="/documents/:documentId/details" element={<DocumentDetailsById />} />
         <Route path="/documents/approval-list" element={<ApprovalList />} />
+        <Route path="/documents/user-approval-setting" element={<ApprovalUserForm />} />
         
               </Routes>
             </Box>

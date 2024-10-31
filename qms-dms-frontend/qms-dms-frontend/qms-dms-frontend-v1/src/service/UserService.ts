@@ -23,3 +23,5 @@ export const findProfile=(userId:any)=>axios.get(BASE_REST_API_URL+'/findProfile
 export const updateProfile=(userId:any,userDto:any)=>axios.put(BASE_REST_API_URL+'/updateProfile/'+userId,userDto);
 
 export const findUserIdByUsernameAPI=()=>axios.get(BASE_URL+"/users/find-user-id");
+
+export const findUserSummary=()=>axios.get(BASE_URL+"/users/userSummary");

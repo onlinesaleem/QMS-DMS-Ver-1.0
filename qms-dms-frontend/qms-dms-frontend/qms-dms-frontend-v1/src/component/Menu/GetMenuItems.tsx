@@ -8,8 +8,10 @@ import FeedTwoToneIcon from "@mui/icons-material/FeedTwoTone";
 import GradingTwoToneIcon from "@mui/icons-material/GradingTwoTone";
 import AssessmentTwoToneIcon from "@mui/icons-material/AssessmentTwoTone";
 import PersonAddAltTwoToneIcon from "@mui/icons-material/PersonAddAltTwoTone";
-import { isAdminUser, isQualityUser, isRoleUser } from "../../service/AuthService";
 import { useEffect, useState } from "react";
+import { List, ListItemButton, ListItemIcon, ListItemText, Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { isAdminUser, isQualityUser, isRoleUser } from "../../service/AuthService";
 import { findUserIdByUsernameAPI } from "../../service/UserService";
 import { getUserPermissionApi } from "../../service/UserModulePermissionService";
 
@@ -24,8 +26,8 @@ interface MenuItem {
 export const GetMenuItems = (): MenuItem[] => {
   const navigate = useNavigate();
 
-  const [, setLoggedUserId] = useState('');
-  const [userPermissionModule, setUserPermissionModule] = useState([]);
+  const [, setLoggedUserId] = useState<string>('');
+  const [userPermissionModule, setUserPermissionModule] = useState<any[]>([]); // Assuming permissions are an array of objects
 
   useEffect(() => {
     const getModulePermission = async () => {
@@ -35,33 +37,32 @@ export const GetMenuItems = (): MenuItem[] => {
 
         const permissionResponse = await getUserPermissionApi(userIdResponse.data);
         setUserPermissionModule(permissionResponse.data);
-        console.log(permissionResponse.data);
       } catch (error) {
         console.error(error);
       }
     };
 
     getModulePermission();
-  }, []); // Empty dependency array to run only once on mount
+  }, []);
 
   // Create the Task submenu items based on user permissions
   const taskSubMenuItems: MenuItem[] = [
-    ...userPermissionModule.map((userModuleAccess: any) => {
+    ...userPermissionModule.map((userModuleAccess) => {
       if (userModuleAccess.id === 2) {
         return {
           label: "General-Task",
           icon: <AddTaskTwoToneIcon />,
           onClick: () => navigate("/general-task-list"),
-          visible: true // Only visible to users with specific permission
+          visible: true,
         };
       }
       return null;
-    }).filter(Boolean), // Filter out null values
+    }).filter(Boolean),
     {
       label: "Task List",
       icon: <AddTaskTwoToneIcon />,
       onClick: () => navigate("/task-list"),
-      visible: !isRoleUser() // Visible to non-role users
+      visible: !isRoleUser(),
     }
   ];
 
@@ -69,12 +70,12 @@ export const GetMenuItems = (): MenuItem[] => {
     {
       label: "Home",
       icon: <HouseOutlinedIcon />,
-      onClick: () => navigate("/")
+      onClick: () => navigate("/"),
     },
     {
       label: "Dashboard",
       icon: <LeaderboardOutlinedIcon />,
-      onClick: () => navigate("/dashboard-incident")
+      onClick: () => navigate("/dashboard-incident"),
     },
     {
       label: "Incident",
@@ -83,20 +84,20 @@ export const GetMenuItems = (): MenuItem[] => {
         {
           label: "Incident",
           icon: <FeedTwoToneIcon />,
-          onClick: () => navigate("/incident-form")
+          onClick: () => navigate("/incident-form"),
         },
         {
           label: "Incident View",
           icon: <GradingTwoToneIcon />,
-          onClick: () => navigate("/incident-list")
+          onClick: () => navigate("/incident-list"),
         },
         {
           label: "OVR-F",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/incident-response"),
-          visible: isQualityUser()
+          visible: isQualityUser(),
         }
-      ]
+      ],
     },
     {
       label: "Doc Management",
@@ -105,55 +106,45 @@ export const GetMenuItems = (): MenuItem[] => {
         {
           label: "Create Document",
           icon: <GradingTwoToneIcon />,
-          onClick: () => navigate("/documents/new")
+          onClick: () => navigate("/documents/new"),
         },
         {
           label: "Manage Documents",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/doc-management"),
-          //visible: isQualityUser()
         },
         {
           label: "View Documents",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/documents"),
-          //visible: isQualityUser()
         },
         {
           label: "Quality Templates",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/templates"),
-          //visible: isQualityUser()
         },
         {
           label: "Document Templates",
           icon: <FeedTwoToneIcon />,
-          onClick: () => navigate("/templates")
+          onClick: () => navigate("/templates"),
         },
-      
         {
           label: "Document Approvals",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/documents/approval-list"),
-         // visible: isQualityUser()
         },
-       
-  
         {
           label: "Quality Standards",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/quality-standards"),
-         // visible: isQualityUser()
         },
-   
-      
-      ]
+      ],
     },
     {
       label: "Task",
       icon: <AddTaskTwoToneIcon />,
       items: taskSubMenuItems,
-      visible: true // Show the "Task" menu to all users
+      visible: true,
     },
     {
       label: "Setting",
@@ -163,14 +154,20 @@ export const GetMenuItems = (): MenuItem[] => {
           label: "User Master",
           icon: <PersonAddAltTwoToneIcon />,
           onClick: () => navigate("/profile"),
-          visible: isAdminUser()
+          visible: isAdminUser(),
+        },
+        {
+          label: "Doc-Approval",
+          icon: <PersonAddAltTwoToneIcon />,
+          onClick: () => navigate("/documents/user-approval-setting"),
+          visible: isAdminUser(),
         }
       ],
-      visible: isAdminUser() // Ensure "Setting" menu is visible only to admin
-    }
+      visible: isAdminUser(),
+    },
   ];
 
-  // Filter sub-menu items based on visibility
+  // Filter out sub-menu items based on visibility
   menuItems.forEach(item => {
     if (item.items) {
       item.items = item.items.filter(subItem => subItem.visible !== false);
@@ -182,3 +179,4 @@ export const GetMenuItems = (): MenuItem[] => {
 
   return filteredMenuItems;
 };
+

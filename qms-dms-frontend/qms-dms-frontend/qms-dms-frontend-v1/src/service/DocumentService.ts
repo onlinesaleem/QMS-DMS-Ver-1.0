@@ -65,6 +65,12 @@ export interface DocumentType{
     documentType:string;
 }
 
+export interface DocumentApprovalUser{
+    id?:number;
+    active:boolean;
+    userId:number;
+    approverType:string;
+}
 // Remove incomplete interface declaration
 
 export const getDocumentDetailsById=(documentId:number)=>axios.get(`${BASE_REST_API_URL}/${documentId}/details`);
@@ -131,3 +137,11 @@ export const getFileBlob = async (documentId: number, fileName: string): Promise
     });
     return response.data;
 };
+
+export const approvalUserMasterSetting=async(documentApprovalUserDto:DocumentApprovalUser)=>{
+    return axios.post(`${BASE_URL}/docs-workflow/approval/userSetting`,documentApprovalUserDto);
+}
+
+export const approvalUserList=async()=>{
+    return axios.get(`${BASE_URL}/docs-workflow/approvals/users`);
+}
