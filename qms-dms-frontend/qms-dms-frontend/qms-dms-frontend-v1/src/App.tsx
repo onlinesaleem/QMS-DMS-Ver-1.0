@@ -35,10 +35,22 @@ import TemplateDetails from './component/Document/TemplateDetails';
 import DocumentList from './component/Document/DocumentList';
 import DocumentForm from './component/Document/DocumentForm';
 import DocumentDetails from './component/Document/DocumentDetails';
-import DocumentDataGrid from './component/Document/DocumentDataGrid';
+
 import ApprovalList from './component/Document/Approval/ApprovalList';
 import DocumentDetailsById from './component/Document/DocumentDetailsById';
 import ApprovalUserForm from './component/Document/Approval/ApprovalUserForm';
+import DocumentDataGrid from './component/Document/DocumentDataGrid';
+import DocumentContentSearch from './component/Document/DocumentContentSearch';
+import DocumentCardView from './component/Document/DocumentCardView';
+import IncidentCardViewPage from './pages/IncidentPages/IncidentCardViewPage';
+
+import IncidentReportById from './pages/IncidentPages/IncidentReportById';
+import AuditListView from './component/Audit/AuditListView';
+import AuditList from './component/Audit/AuditList';
+
+import AuditResponseForm from './component/Audit/AuditResponseForm';
+import CreateAuditForm from './component/Audit/CreateAuditForm';
+import AuditDetailPage from './component/Audit/AuditDetailPage';
 
 
 
@@ -100,7 +112,7 @@ function App() {
                 <Route path="/documents" element={<DocumentList/>}/>
                 <Route path="/documents/update/:id" element={<DocumentList/>}/>
                 <Route path="/documents/${document.id}/edit" element={<DocumentForm/>}/>
-                
+                <Route path="/incidentResponseReport/:incId" element={<IncidentReportById />} />
       {/* Your routes and other components */}
     
         <Route path="/templates" element={<TemplateList />} />
@@ -114,6 +126,22 @@ function App() {
         <Route path="/documents/:documentId/details" element={<DocumentDetailsById />} />
         <Route path="/documents/approval-list" element={<ApprovalList />} />
         <Route path="/documents/user-approval-setting" element={<ApprovalUserForm />} />
+        <Route path="/document-content-search" element={<DocumentContentSearch />} />
+        <Route path="/document-card-view" element={<DocumentCardView />} />
+        <Route path="/incident-card-view" element={<IncidentCardViewPage/>}/>
+        <Route path="/audits" element={<AuditListView />} />
+        <Route path="/audit-list" element={<AuditList />} />
+        <Route path="/audit-view" element={<AuditListView />} />
+            {/* Route for creating a new audit */}
+            <Route path="/audits/create" element={<CreateAuditForm  />} />
+
+{/* Route for editing an existing audit */}
+<Route
+  path="/audits/edit/:auditId" element={<CreateAuditForm />}   />
+
+        <Route path="/audits/response/:auditId" element={<AuditResponseForm />} />
+        <Route path="/audits/:auditId" element={<AuditDetailPage />} />
+
         
               </Routes>
             </Box>

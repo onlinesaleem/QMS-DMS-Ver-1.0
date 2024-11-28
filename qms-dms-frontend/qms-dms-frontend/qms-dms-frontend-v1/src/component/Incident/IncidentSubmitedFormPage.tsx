@@ -17,7 +17,7 @@ export default function IncidentSubmitedFormPage() {
       
  
   return (
-    <>Test Component
+    <>
     
     </>
   )

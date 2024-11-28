@@ -27,9 +27,12 @@ export interface AttachmentDTO {
     filePath?: string;
     documentId?: number;
     uploadDate?: string;
+    contentText?:string;
 }
 
 export interface DocumentDTO {
+    //matchCount: number;
+    //matchCount: ReactNode;
     
     id?: number;
     title: string;

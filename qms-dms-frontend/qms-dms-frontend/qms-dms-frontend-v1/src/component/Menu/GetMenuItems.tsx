@@ -94,7 +94,7 @@ export const GetMenuItems = (): MenuItem[] => {
         {
           label: "OVR-F",
           icon: <AssessmentTwoToneIcon />,
-          onClick: () => navigate("/incident-response"),
+          onClick: () => navigate("/incident-card-view"),
           visible: isQualityUser(),
         }
       ],
@@ -112,6 +112,12 @@ export const GetMenuItems = (): MenuItem[] => {
           label: "Manage Documents",
           icon: <AssessmentTwoToneIcon />,
           onClick: () => navigate("/doc-management"),
+        },
+        {
+          label: "Document Search",
+          icon: <AssessmentTwoToneIcon />,
+          //onClick: () => navigate("/document-content-search"),
+          onClick: () => navigate("/document-card-view"),
         },
         {
           label: "View Documents",

@@ -2,7 +2,7 @@ import { Paper, Typography } from "@mui/material";
 
 import IncidentFinalReportGridPage from "./IncidentFinalReportGridPage";
 
-const IncidentResponseReport = () => {
+const IncidentResponseReport1 = () => {
   return (
    
       <Paper
@@ -16,4 +16,4 @@ const IncidentResponseReport = () => {
   )
 }
 
-export default IncidentResponseReport;
+export default IncidentResponseReport1;

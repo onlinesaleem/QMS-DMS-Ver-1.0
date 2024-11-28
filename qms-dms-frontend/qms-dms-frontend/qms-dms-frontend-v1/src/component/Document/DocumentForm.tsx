@@ -153,44 +153,44 @@ const DocumentForm: React.FC = () => {
     event.preventDefault();
 
     try {
-        const formData = new FormData();
-        formData.append('title', document.title);
-        formData.append('content', document.content);
-        formData.append('departmentId',departmentId);
-        formData.append('approvalStatus', document.approvalStatus);
-        formData.append('documentTypeId',documentTypeId);
-        formData.append('effectiveDate',document.effectiveDate);
-        formData.append('issueDate',document.issueDate);
-        formData.append('reviewDate',document.reviewDate)
-        selectedFiles.forEach(file => {
-            formData.append('file', file);
-        });
+      const formData = new FormData();
+      formData.append('title', document.title);
+      formData.append('content', document.content);
+      formData.append('departmentId', departmentId);
+      formData.append('approvalStatus', document.approvalStatus);
+      formData.append('documentTypeId', documentTypeId);
+      formData.append('effectiveDate', document.effectiveDate);
+      formData.append('issueDate', document.issueDate);
+      formData.append('reviewDate', document.reviewDate);
+      
+      selectedFiles.forEach(file => {
+          formData.append('file', file);
+      });
 
-        let response;
-        if (id) {
-            response = await updateDocument(Number(id), formData);
-        } else {
-            response = await createDocument(formData);
-        }
+      let response;
+      if (id) {
+          response = await updateDocument(Number(id), formData);
+      } else {
+          response = await createDocument(formData);
+      }
 
-        // Check if the response status is OK (200) or Created (201)
-        if (response.status === 200 || response.status === 201) {
-            setSnackbarMessage('Document saved successfully!');
-            setSnackbarOpen(true);
+      if (response.status === 200 || response.status === 201) {
+          setSnackbarMessage('Document saved successfully!');
+          setSnackbarOpen(true);
+          setTimeout(() => {
+              navigate('/documents');
+          }, 2000);
+      } else {
+          throw new Error('Failed to save document');
+      }
+  } catch (error: any) {
+      console.error('Error saving document:', error);
 
-            setTimeout(() => {
-                navigate('/documents');
-            }, 2000);
-        } else {
-            throw new Error('Failed to save document');
-        }
-    } catch (error) {
-        console.error('Error saving document:', error);
-
-        // Adjusting the error handling to display in the snackbar
-        setSnackbarMessage(`Error saving document: ${error.message}`);
-        setSnackbarOpen(true);
-    }
+      // Display server error message in snackbar if available
+      const errorMessage = error.response?.data?.message || 'Error saving document';
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+  }
 };
   return (
     <Container>

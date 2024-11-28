@@ -62,7 +62,7 @@ const DocumentList: React.FC = () => {
           <ListItem key={document.id} divider>
             <ListItemText
               primary={<Link to={`/documents/${document.id}`}>{indexOfFirstDocument + index + 1}. {document.title}</Link>}
-              secondary={`Status: ${document.status}`}
+              secondary={`Status: ${document.status.engName}`}
             />
             <Box>
               <Button onClick={() => navigate(`/documents/${document.id}/edit`)} variant="outlined" color="primary">Edit</Button>

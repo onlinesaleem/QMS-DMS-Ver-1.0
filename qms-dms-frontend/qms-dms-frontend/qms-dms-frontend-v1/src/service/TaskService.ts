@@ -25,7 +25,7 @@ export const fetchStatus=()=>axios.get(BASE_REST_API_URL+'/status');
 
 export const updateTaskResponse=(id: any,taskResponse: any)=>axios.put(BASE_REST_API_URL+'/updateResponse/'+id,taskResponse);
 
-export const incidentResponseView=(page:any,size:any)=>axios.get(BASE_REST_API_URL+'/taskResponse?page='+page+'&size='+size);
+export const incidentResponseView=(page: any, size: any, filters: { taskStatus: string; ovrStatus: string; date: string; taskNumber: string; })=>axios.get(BASE_REST_API_URL+'/taskResponse?page='+page+'&size='+size);
 
 export const  incidentFinalReport=(taskRefId:any)=>axios.get(BASE_REST_API_URL+'/incidentReport/'+taskRefId);
 
