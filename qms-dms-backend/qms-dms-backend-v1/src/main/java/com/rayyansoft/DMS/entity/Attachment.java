@@ -33,9 +33,27 @@ public class Attachment {
     @Column(name = "upload_date")
     private Date uploadDate;
 
+    @Column(name = "content_text", columnDefinition = "TEXT")
+    private String contentText;
+
     @ManyToOne
     @JoinColumn(name = "document_id")
     private Document document;
+
+    // Fields for flexible reference to any entity (e.g., document, audit, etc.)
+    @Column(name = "reference_id", nullable = false)
+    private Long referenceId; // ID of the referenced entity (e.g., Document, Audit, etc.)
+
+    @Column(name = "reference_type", nullable = false, length = 50)
+    private String referenceType; // Type of reference (e.g., "DOCUMENT", "AUDIT")
+
+    @ManyToOne
+    @JoinColumn(name = "audit_id", nullable = true) // Nullable for reusability
+    private Audit audit;
+
+    @ManyToOne
+    @JoinColumn(name = "audit_response_id")
+    private AuditResponse auditResponse;
 
     @Override
     public String toString() {

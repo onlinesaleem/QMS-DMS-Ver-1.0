@@ -6,6 +6,7 @@ import com.rayyansoft.DMS.dto.DocumentDto;
 import com.rayyansoft.DMS.dto.DocumentTypeDto;
 import com.rayyansoft.DMS.entity.Document;
 import com.rayyansoft.DMS.service.DocumentService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class DocumentController {
                                                       @RequestPart("file") MultipartFile file) throws IOException {
 
 
+        System.out.println("document creation method called"+documentDto.getTitle());
         // Define the path where files will be saved
         String uploadDir = "D:/uploads/";
         Path filePath = Paths.get(uploadDir, file.getOriginalFilename());

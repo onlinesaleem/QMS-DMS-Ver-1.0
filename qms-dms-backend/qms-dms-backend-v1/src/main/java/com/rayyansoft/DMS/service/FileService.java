@@ -13,4 +13,6 @@ public interface FileService {
 
     public List<Attachment> getAllFiles();
 
+    public List<Attachment> searchFilesByKeyword(String keyword);
+
 }

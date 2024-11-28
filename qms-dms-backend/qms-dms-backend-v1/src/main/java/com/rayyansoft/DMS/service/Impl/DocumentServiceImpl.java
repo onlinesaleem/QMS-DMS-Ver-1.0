@@ -8,6 +8,12 @@ import com.rayyansoft.DMS.repository.*;
 import com.rayyansoft.DMS.service.DocumentService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -39,52 +46,109 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentDto createDocument(DocumentDto documentDTO, AttachmentDto attachmentDTO, MultipartFile file) throws IOException {
+        System.out.println("Creating document with title: service class " + documentDTO.getTitle());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Optional<User> user=userRepository.findByUsername(auth.getName());
+        Optional<User> user = userRepository.findByUsername(auth.getName());
+        if (!user.isPresent()) {
+            throw new RuntimeException("User not authenticated or not found");
+        }
+
         Department department = departmentRepository.findById(documentDTO.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
-
-        DocumentType documentType=documentTypeRepository.findById(documentDTO.getDocumentTypeId())
-                .orElseThrow(()-> new RuntimeException("document type not found"));
+        DocumentType documentType = documentTypeRepository.findById(documentDTO.getDocumentTypeId())
+                .orElseThrow(() -> new RuntimeException("Document type not found"));
 
         Document document = modelMapper.map(documentDTO, Document.class);
         document.setCreatedDate(LocalDate.now());
         document.setApprovalStatus(Document.ApprovalStatus.UNDER_REVIEW);
-       document.setCreatedBy(user.get());
-       document.setDocumentDepartment(department);
-       document.setDocumentType(documentType);
-
-       ApprovalWorkflow approvalWorkflow=new ApprovalWorkflow();
-
-       approvalWorkflow.setAction("UNDER_REVIEW");
-       approvalWorkflow.setDocument(document);
-       approvalWorkflow.setTimestamp(LocalDateTime.now());
-       approvalWorkflow.setUser(user.get());
-
-        // Handle file attachment (if provided)
-        // Handle file attachment (if provided)
-
-        if (file != null && !file.isEmpty()) {
-            Attachment attachmentEntity = handleFileUpload(file, document);
-            document.setAttachments(Collections.singletonList(attachmentEntity)); // Set the file(s) for the document
-        }
-
-
-
+        document.setCreatedBy(user.get());
+        document.setDocumentDepartment(department);
+        document.setDocumentType(documentType);
 
         Document savedDocument = documentRepository.save(document);
 
-        // Create Approval Levels (you will implement the logic to determine approvers)
-        List<DocumentApprovalUserDto> approvers = getApproversForDocument(savedDocument); // Custom logic to find approvers
-        createApprovalLevelsForDocument(savedDocument, approvers); // Creating approval levels
+        if (file != null && !file.isEmpty()) {
+            System.out.println("File received: " + file.getOriginalFilename());
 
+            try {
+                // Save the attachment without text content initially
+                Attachment attachmentEntity = handleFileUpload(file, savedDocument);
+                attachmentEntity.setReferenceId(savedDocument.getId());
+                attachmentEntity.setReferenceType("DMS");
+                attachmentRepository.save(attachmentEntity);  // Save attachment to get ID
 
-        documentApprovalWorkflowRepository.save(approvalWorkflow);
+                // Extract text from the saved file directly
+                String extractedText = extractTextFromFile(attachmentEntity.getFilePath());
+                if (extractedText != null && !extractedText.isEmpty()) {
+                    attachmentEntity.setContentText(extractedText);  // Update with extracted text
+                    attachmentRepository.save(attachmentEntity);
+                } else {
+                    System.out.println("No text extracted from the file.");
+                }
+
+                System.out.println("Attachment saved with ID: " + attachmentEntity.getId());
+            } catch (IOException e) {
+                System.err.println("Error during file handling: " + e.getMessage());
+            }
+        } else {
+            System.out.println("No file provided for upload.");
+        }
+
         return modelMapper.map(savedDocument, DocumentDto.class);
     }
 
 
+    public String extractTextFromFile(String filePath) throws IOException {
+        StringBuilder extractedText = new StringBuilder();
+
+        // Load the file directly from disk
+        try (PDDocument document = PDDocument.load(new File(filePath))) {
+            System.out.println("PDF successfully loaded from disk for extraction.");
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+
+            for (int pageNum = 0; pageNum < document.getNumberOfPages(); pageNum++) {
+                pdfStripper.setStartPage(pageNum + 1);
+                pdfStripper.setEndPage(pageNum + 1);
+                String pageText = pdfStripper.getText(document).trim();
+
+                if (pageText.isEmpty()) {
+                    System.out.println("No text found on page " + (pageNum + 1) + ", attempting OCR.");
+                    pageText = extractTextWithOCR(new PDFRenderer(document), pageNum);
+                } else {
+                    System.out.println("Text extracted from page " + (pageNum + 1) + ": " + pageText);
+                }
+
+                extractedText.append(pageText).append("\n");
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading or parsing PDF with PDFBox: " + e.getMessage());
+            throw e;
+        }
+
+        return extractedText.toString();
+    }
+
+    private String extractTextWithOCR(PDFRenderer pdfRenderer, int pageIndex) {
+        String ocrText = "";
+
+        try {
+            // Render page as image for OCR
+            BufferedImage image = pdfRenderer.renderImageWithDPI(pageIndex, 300); // 300 DPI for better OCR accuracy
+
+            // Initialize Tesseract OCR
+            Tesseract tesseract = new Tesseract();
+            tesseract.setDatapath("path_to_tessdata"); // Set the path to your tessdata directory
+
+            // Perform OCR on the image
+            ocrText = tesseract.doOCR(image);
+            System.out.println("OCR extracted text: " + ocrText);
+        } catch (IOException | TesseractException e) {
+            System.err.println("Error during OCR processing on page " + (pageIndex + 1) + ": " + e.getMessage());
+        }
+
+        return ocrText;
+    }
     private void createApprovalLevelsForDocument(Document savedDocument, List<DocumentApprovalUserDto> approvers) {
         int level = 1;
         for (DocumentApprovalUserDto approverDto : approvers) {
@@ -159,6 +223,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
 
+
+
     @Override
     public DocumentDto updateDocument(Long id, DocumentDto documentDTO, MultipartFile file) throws IOException {
         System.out.println("Entered updateDocument method: " + id);
@@ -199,25 +265,18 @@ public class DocumentServiceImpl implements DocumentService {
         // Handle attachment updates
         List<Attachment> existingAttachments = attachmentRepository.findByDocumentId(id);
 
-        // If a new file is uploaded, delete the old attachments and save the new one
+        // If a new file is uploaded, delete old attachments and save the new one
         if (file != null && !file.isEmpty()) {
             // Delete existing attachments from both the file system and database
             for (Attachment attachment : existingAttachments) {
                 java.io.File existingFile = new java.io.File(attachment.getFilePath());
-                if (existingFile.exists()) {
-                    if (existingFile.delete()) {
-                        System.out.println("Deleted existing file: " + attachment.getFilePath());
-                        // Remove the attachment from the database
-                        attachmentRepository.delete(attachment);
-                        System.out.println("Deleted attachment record from database: " + attachment.getFileName());
-                    } else {
-                        System.out.println("Failed to delete existing file: " + attachment.getFilePath());
-                    }
-                } else {
-                    System.out.println("File not found, skipping deletion: " + attachment.getFilePath());
-                    // Still remove the attachment record from the database even if the file isn't found
-                    attachmentRepository.delete(attachment);
+                if (existingFile.exists() && existingFile.delete()) {
+                    System.out.println("Deleted existing file: " + attachment.getFilePath());
+                    attachmentRepository.delete(attachment); // Delete attachment record
                     System.out.println("Deleted attachment record from database: " + attachment.getFileName());
+                } else {
+                    System.out.println("File not found or failed to delete: " + attachment.getFilePath());
+                    attachmentRepository.delete(attachment); // Delete attachment record even if file is missing
                 }
             }
 
@@ -227,21 +286,26 @@ public class DocumentServiceImpl implements DocumentService {
             java.io.File targetFile = new java.io.File(filePath);
             file.transferTo(targetFile);
 
-            // Save the new attachment
+            // Extract text from the new file if it's a PDF
+            String extractedText = "";
+
+
+            // Save the new attachment with extracted text
             Attachment newAttachment = new Attachment();
             newAttachment.setFileName(uniqueFileName);
             newAttachment.setFilePath(filePath);
             newAttachment.setUploadDate(new Date());
             newAttachment.setDocument(document);
+            newAttachment.setContentText(extractedText); // Store extracted text in contentText field
             attachmentRepository.save(newAttachment);
-            System.out.println("New attachment saved: " + newAttachment.getFileName());
+            System.out.println("New attachment saved with text extraction: " + newAttachment.getFileName());
         } else {
             System.out.println("No new file uploaded, retaining existing attachments");
         }
 
         Document savedDocument = documentRepository.save(document);
         return modelMapper.map(savedDocument, DocumentDto.class);
-       }
+    }
 
     @Override
     public DocumentDetailsDto getDocumentDetails(Long documentId) {
@@ -283,21 +347,33 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Attachment handleFileUpload(MultipartFile file, Document document) throws IOException {
-        // Generate a unique file name
+        String uploadDir = "D:/Uploads/";
         String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        String filePath = "D:/uploads/" + uniqueFileName;
+        String filePath = uploadDir + uniqueFileName;
 
-        // Save the file to the folder
+        // Ensure the upload directory exists
+        java.io.File uploadDirectory = new java.io.File(uploadDir);
+        if (!uploadDirectory.exists()) {
+            boolean dirCreated = uploadDirectory.mkdirs();
+            System.out.println("Upload directory created: " + dirCreated);
+        }
+
+        // Save the file to the target directory
         java.io.File targetFile = new java.io.File(filePath);
-        file.transferTo(targetFile);
+        try {
+            file.transferTo(targetFile);
+            System.out.println("File successfully uploaded to: " + filePath);
+        } catch (IOException e) {
+            System.err.println("Failed to upload file: " + e.getMessage());
+            throw e;
+        }
 
-        // Create the Attachment entity
+        // Create and return the Attachment entity
         Attachment attachment = new Attachment();
-        attachment.setFileName(uniqueFileName); // Save the unique file name
+        attachment.setFileName(uniqueFileName);
         attachment.setFilePath(filePath);
         attachment.setUploadDate(new Date());
-        attachment.setDocument(document); // Associate the file with the document
-
+        attachment.setDocument(document);
         return attachment;
     }
 }

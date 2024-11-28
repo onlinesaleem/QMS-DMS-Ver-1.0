@@ -26,6 +26,7 @@ public class FileServiceImpl implements FileService {
         attachment.setFileName(fileDTO.getFileName());
         attachment.setFilePath(fileDTO.getFilePath());
         attachment.setUploadDate(new Date());
+        attachment.setContentText("test saving...");
 
         Document document = documentRepository.findById(fileDTO.getDocumentId())
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -43,5 +44,10 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<Attachment> getAllFiles() {
         return fileRepository.findAll();
+    }
+
+    @Override
+    public List<Attachment> searchFilesByKeyword(String keyword) {
+        return fileRepository.findByContentTextContainingIgnoreCase(keyword);
     }
 }
