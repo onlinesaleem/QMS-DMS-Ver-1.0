@@ -51,6 +51,7 @@ import AuditList from './component/Audit/AuditList';
 import AuditResponseForm from './component/Audit/AuditResponseForm';
 import CreateAuditForm from './component/Audit/CreateAuditForm';
 import AuditDetailPage from './component/Audit/AuditDetailPage';
+import AuditDashboard from './pages/Dashboard/AuditDashboard';
 
 
 
@@ -141,6 +142,7 @@ function App() {
 
         <Route path="/audits/response/:auditId" element={<AuditResponseForm />} />
         <Route path="/audits/:auditId" element={<AuditDetailPage />} />
+        <Route path="audits/dashboard" element={<AuditDashboard/>}/>
 
         
               </Routes>

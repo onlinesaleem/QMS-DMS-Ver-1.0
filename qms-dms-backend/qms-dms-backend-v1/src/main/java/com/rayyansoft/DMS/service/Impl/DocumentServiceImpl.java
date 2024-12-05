@@ -101,32 +101,27 @@ public class DocumentServiceImpl implements DocumentService {
 
     public String extractTextFromFile(String filePath) throws IOException {
         StringBuilder extractedText = new StringBuilder();
-
-        // Load the file directly from disk
         try (PDDocument document = PDDocument.load(new File(filePath))) {
-            System.out.println("PDF successfully loaded from disk for extraction.");
             PDFTextStripper pdfStripper = new PDFTextStripper();
 
+            // Try extracting text from the PDF
             for (int pageNum = 0; pageNum < document.getNumberOfPages(); pageNum++) {
                 pdfStripper.setStartPage(pageNum + 1);
                 pdfStripper.setEndPage(pageNum + 1);
                 String pageText = pdfStripper.getText(document).trim();
 
+                // If no text is found, notify the user
                 if (pageText.isEmpty()) {
-                    System.out.println("No text found on page " + (pageNum + 1) + ", attempting OCR.");
-                    pageText = extractTextWithOCR(new PDFRenderer(document), pageNum);
-                } else {
-                    System.out.println("Text extracted from page " + (pageNum + 1) + ": " + pageText);
+                    pageText = "No text found on this page.";
                 }
 
                 extractedText.append(pageText).append("\n");
             }
         } catch (IOException e) {
-            System.err.println("Error loading or parsing PDF with PDFBox: " + e.getMessage());
-            throw e;
+            throw new IOException("Error during file processing: " + e.getMessage());
         }
 
-        return extractedText.toString();
+        return extractedText.toString().isEmpty() ? "No content extracted." : extractedText.toString();
     }
 
     private String extractTextWithOCR(PDFRenderer pdfRenderer, int pageIndex) {

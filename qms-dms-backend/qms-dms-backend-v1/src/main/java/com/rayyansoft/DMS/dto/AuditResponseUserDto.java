@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class UserSummaryDto {
+@NoArgsConstructor
+public class AuditResponseUserDto {
 
     private Long id;
     private String name;

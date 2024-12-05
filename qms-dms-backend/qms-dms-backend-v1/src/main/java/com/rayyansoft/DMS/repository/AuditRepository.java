@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface AuditRepository extends JpaRepository<Audit,Long>, JpaSpecificationExecutor<Audit> {
 
@@ -47,7 +46,29 @@ public interface AuditRepository extends JpaRepository<Audit,Long>, JpaSpecifica
             @Param("assignedToId") Long assignedToId,
             @Param("updatedBy") User updatedBy,  // Use updatedBy here instead of user
             @Param("description") String description,
-            @Param("auditType")AuditType auditType);
+            @Param("auditType") AuditType auditType);
 
+
+
+
+    @Query("SELECT COUNT(a) FROM Audit a WHERE a.statusId.id = :statusId")
+    Long countByStatus(@Param("statusId") Long statusId);
+
+
+    @Query("SELECT COUNT(a) FROM Audit a WHERE a.dueDate < CURRENT_DATE")
+    Long countDueAudits();
+
+
+    // Query to get audit counts grouped by month
+    @Query("SELECT FUNCTION('DATE_FORMAT', a.assignedDate, '%Y-%m') AS month, COUNT(a) AS auditCount " +
+            "FROM Audit a " +
+            "GROUP BY month ORDER BY month DESC")
+    List<Object[]> findMonthlyAuditCount();
+
+    // Query to get completed audits grouped by month
+    @Query("SELECT FUNCTION('DATE_FORMAT', a.completionDate, '%Y-%m') AS month, COUNT(a) AS completed " +
+            "FROM Audit a " +
+            "WHERE a.completionDate IS NOT NULL " +
+            "GROUP BY month ORDER BY month DESC")
+    List<Object[]> findAuditCompletionProgress();
 }
-

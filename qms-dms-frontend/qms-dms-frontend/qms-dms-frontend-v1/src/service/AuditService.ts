@@ -73,30 +73,7 @@ export const getAuditAttachments = async (auditId) => {
       throw error;
   }
 };
-
-// Submit an audit response with optional file attachment
-export const submitAuditResponse = async (auditId, responseText, file) => {
-  const formData = new FormData();
-  formData.append('response', responseText);
-  if (file) {
-      formData.append('file', file);
-  }
-
-  try {
-      const response = await axios.post(`${BASE_URL}/${auditId}/responses`, formData, {
-          headers: {
-              'Content-Type': 'multipart/form-data'
-          }
-      });
-      return response;
-  } catch (error) {
-      console.error("Error submitting audit response", error);
-      throw error;
-  }
-};
-
-
-
+ 
 export const getFileBlob = async (auditId: number, fileName: string): Promise<Blob> => {
   const response = await axios.get(`${FILE_API_URL}/${auditId}/${fileName}`, {
       responseType: 'blob',
@@ -133,11 +110,10 @@ export const fetchAuditDetails = async (auditId: number) => {
 
 export const createAuditResponse = async (
   auditId: number, 
-  response: string, 
+formData:FormData,
   file: File | null
 ): Promise<any> => {
-  const formData = new FormData();
-  formData.append('response', response); // Append the response text
+  
   
   // If a file is provided, append it to the FormData
   if (file) {
@@ -153,5 +129,74 @@ export const createAuditResponse = async (
   } catch (error) {
     console.error('Error creating audit response:', error);
     throw error; // Rethrow or handle the error as needed
+  }
+};
+
+
+export const getAuditSummary = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/audits/summary`);
+    return response.data; // returns an object like { totalAudits, openAudits, closedAudits, dueAudits }
+  } catch (error) {
+    console.error('Error fetching audit summary:', error);
+    throw error;
+  }
+};
+
+// Export audits to Excel
+export const exportAuditsToExcel = async (): Promise<any> => {
+  try {
+    const response = await axios.get(`${BASE_URL}/audits/export/excel`, {
+      responseType: 'blob', // Required to handle binary data
+    });
+    const fileURL = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.setAttribute('download', 'audits.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+  }
+};
+
+// Export audits to PDF
+export const exportAuditsToPdf = async (): Promise<any> => {
+  try {
+    const response = await axios.get(`${BASE_URL}/audits/export/pdf`, {
+      responseType: 'blob', // Required to handle binary data
+    });
+    const fileURL = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.setAttribute('download', 'audits.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('Error exporting to PDF:', error);
+  }
+};
+
+// API to get monthly audit data (audit count per month)
+export const getMonthlyAuditData = async () => {
+  try {
+      const response = await axios.get(`${BASE_URL}/monthly-audit-data`);
+      return response.data;
+  } catch (error) {
+      console.error('Error fetching monthly audit data:', error);
+      throw error;
+  }
+};
+
+// API to get audit completion progress (completed audits per month)
+export const getAuditCompletionProgress = async () => {
+  try {
+      const response = await axios.get(`${BASE_URL}/audit-completion-progress`);
+      return response.data;
+  } catch (error) {
+      console.error('Error fetching audit completion progress:', error);
+      throw error;
   }
 };

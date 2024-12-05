@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, List, ListItem, ListItemText, CircularProgress, Card, CardContent } from '@mui/material';
+import { Box, Typography, Button, List, ListItem, ListItemText, CircularProgress, Card, CardContent, Divider } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchAuditDetails } from '../../service/AuditService'; // Service to fetch audit details, responses, and attachments
 
@@ -51,37 +51,38 @@ const AuditDetailPage: React.FC = () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Box sx={{ padding: 3, maxWidth: 900, margin: 'auto' }}>
+    <Box sx={{ padding: 3, maxWidth: 900, margin: 'auto' ,marginTop:'50px'}}>
       {/* Audit Details */}
-      <Card sx={{ marginBottom: 3 }}>
+      <Card sx={{ marginBottom: 3, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h4" gutterBottom>{auditDetail?.title}</Typography>
-          <Typography variant="body1" paragraph>{auditDetail?.description}</Typography>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>{auditDetail?.title}</Typography>
+          <Typography variant="body1" paragraph sx={{ color: '#555' }}>{auditDetail?.description}</Typography>
           <Typography variant="body2" color="textSecondary">
-            Assigned Date: {new Date(auditDetail?.assignedDate).toLocaleDateString()}<br />
-            Due Date: {new Date(auditDetail?.dueDate).toLocaleDateString()}<br />
-            Status: <span style={{ color: auditDetail?.status === 'Completed' ? 'green' : 'orange' }}>
-              {auditDetail?.status.engName || 'In Progress'}
+            <strong>Assigned Date:</strong> {new Date(auditDetail?.assignedDate).toLocaleDateString()}<br />
+            <strong>Due Date:</strong> {new Date(auditDetail?.dueDate).toLocaleDateString()}<br />
+            <strong>Status:</strong> 
+            <span style={{ color: auditDetail?.status?.engName === 'Closed' ? 'green' : 'orange', fontWeight: 'bold' }}>
+              {auditDetail?.status?.engName || 'In Progress'}
             </span>
           </Typography>
         </CardContent>
       </Card>
 
-      {/* Created By and Responded By */}
-      <Card sx={{ marginBottom: 3 }}>
+      {/* Audit Information Section */}
+      <Card sx={{ marginBottom: 3, backgroundColor: '#f1f1f1' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>Audit Information</Typography>
-          <Typography variant="body2">Created By: {auditDetail?.createdBy}</Typography>
-          <Typography variant="body2">Responded By: {auditDetail?.respondedBy || 'N/A'}</Typography>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>Audit Information</Typography>
+          <Typography variant="body2" sx={{ color: '#666' }}><strong>Created By:</strong> {auditDetail?.createdBy?.name}</Typography>
+          <Typography variant="body2" sx={{ color: '#666' }}><strong>Responded By:</strong> {auditDetail?.respondedBy || 'N/A'}</Typography>
         </CardContent>
       </Card>
 
       {/* Response Section */}
-      <Typography variant="h6" sx={{ marginTop: 3 }}>Audit Responses</Typography>
+      <Typography variant="h6" sx={{ marginTop: 3, fontWeight: 'bold' }}>Audit Responses</Typography>
       {auditDetail?.responses && auditDetail.responses.length > 0 ? (
         <List>
           {auditDetail.responses.map((response: any) => (
-            <ListItem key={response.id}>
+            <ListItem key={response.id} sx={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
               <ListItemText
                 primary={`Response: ${response.response}`}
                 secondary={`Submitted on: ${new Date(response.responseDate).toLocaleDateString()}`}
@@ -94,14 +95,17 @@ const AuditDetailPage: React.FC = () => {
       )}
 
       {/* Attachments Section */}
-      <Typography variant="h6" sx={{ marginTop: 3 }}>Attachments</Typography>
+      <Typography variant="h6" sx={{ marginTop: 3, fontWeight: 'bold' }}>Attachments</Typography>
       {auditDetail?.attachments && auditDetail.attachments.length > 0 ? (
         <List>
           {auditDetail.attachments.map((attachment: any) => (
-            <ListItem key={attachment.id}>
+              
+                 <ListItem key={attachment.id} sx={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
+            
               <ListItemText
                 primary={
-                  <a href={`/api/files/${attachment.fileName}`} target="_blank" rel="noopener noreferrer">
+                                
+                  <a href={`/api/files/${attachment.fileName}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1E88E5', textDecoration: 'underline' }}>
                     {attachment.fileName}
                   </a>
                 }
@@ -116,7 +120,7 @@ const AuditDetailPage: React.FC = () => {
 
       {/* Add Response Button */}
       {isResponseSubmitted ? (
-        <Typography variant="body1" color="textSecondary">Response has already been submitted.</Typography>
+        <Typography variant="body1" color="textSecondary" sx={{ marginTop: 2 }}>Response has already been submitted.</Typography>
       ) : (
         <Button variant="contained" color="primary" onClick={handleAddResponse} sx={{ marginTop: 2 }}>
           Add Response

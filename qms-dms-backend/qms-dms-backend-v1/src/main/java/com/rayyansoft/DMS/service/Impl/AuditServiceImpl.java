@@ -7,7 +7,6 @@ import com.rayyansoft.DMS.service.AuditService;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -175,7 +173,7 @@ public class AuditServiceImpl implements AuditService {
     }
 
     // Submit audit response with attachments
-    public void submitAuditResponse(Long auditId, String response, MultipartFile file) throws IOException {
+    public void submitAuditResponse(Long auditId, AuditResponseDto auditResponseDto, MultipartFile file) throws IOException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Optional<User> user = userRepository.findByUsername(auth.getName());
 
@@ -184,10 +182,19 @@ public class AuditServiceImpl implements AuditService {
         Audit audit = auditRepository.findById(auditId)
                 .orElseThrow(() -> new RuntimeException("Audit not found with ID: " + auditId));
 
+
+        Status status=statusRepository.findById(auditResponseDto.getStatusId())
+                .orElseThrow(()->new RuntimeException("Status id not found"));
+        audit.setStatusId(status);
+if (auditResponseDto.getStatusId()==3)
+{
+    audit.setCompletionDate(LocalDate.now());
+}
         // Save the response (this could be a new entity, depending on your design)
         AuditResponse auditResponse = new AuditResponse();
         auditResponse.setAudit(audit);
-        auditResponse.setResponse(response);
+        auditResponse.setResponse(auditResponseDto.getResponse());
+
         auditResponse.setResponseDate(LocalDate.now());
         auditResponse.setRespondedBy(user.get().getId());
         AuditResponse savedAuditReponse=auditResponseRepository.save(auditResponse);
@@ -327,6 +334,23 @@ public class AuditServiceImpl implements AuditService {
         // Fetch the attachments for this audit
         List<Attachment> auditAttachments = attachmentRepository.findByAuditId(auditId);
 
+        User user=userRepository.findById(audit.getCreatedBy().getId())
+                .orElseThrow(()->new RuntimeException("user not found"));
+        modelMapper.map(user,UserSummaryDto.class);
+
+
+
+
+
+        Long respondedBy=auditResponseRepository.findingResponseByAuditId(auditId);
+
+        System.out.println("the reported user id is "+respondedBy);
+
+        User respondedUser=userRepository.findById(respondedBy)
+                .orElseThrow(()->new RuntimeException("responded user not found"));
+
+
+
         // Fetch attachments for the responses using auditResponseId
         List<Attachment> responseAttachments = new ArrayList<>();
         for (AuditResponse response : responses) {
@@ -341,12 +365,53 @@ public class AuditServiceImpl implements AuditService {
         // Map the audit and responses into a DTO
         AuditDetailDto auditDetailDto = modelMapper.map(audit, AuditDetailDto.class);
         auditDetailDto.setResponses(modelMapper.map(responses, new TypeToken<List<AuditResponseDto>>() {}.getType()));
+        auditDetailDto.setRespondedBy(respondedUser.getName());
         auditDetailDto.setAttachments(allAttachments);
 
         return auditDetailDto;
 
     }
 
+    @Override
+    public Map<String, Long> getAuditSummary() {
+        long totalAudits = auditRepository.count();
+        long openAudits = auditRepository.countByStatus(1L);
+        long closedAudits = auditRepository.countByStatus(3L);
+        long dueAudits = auditRepository.countDueAudits();
+
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("totalAudits", totalAudits);
+        summary.put("openAudits", openAudits);
+        summary.put("closedAudits", closedAudits);
+        summary.put("dueAudits", dueAudits);
+
+        return summary;
+    }
+    // Fetch monthly audit data (audit count by month)
+    public List<Map<String, Object>> getMonthlyAuditData() {
+        List<Object[]> results = auditRepository.findMonthlyAuditCount();  // Query to get monthly data
+        List<Map<String, Object>> monthlyData = new ArrayList<>();
+        for (Object[] result : results) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("month", result[0]);
+            map.put("count", result[1]);
+            monthlyData.add(map);
+        }
+        return monthlyData;
+    }
+
+    // Fetch audit completion progress (completed audits by month)
+    public List<Map<String, Object>> getAuditCompletionProgress() {
+        List<Object[]> results = auditRepository.findAuditCompletionProgress();  // Query to get completion progress
+        List<Map<String, Object>> progressData = new ArrayList<>();
+        for (Object[] result : results) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("month", result[0]);
+            map.put("completed", result[1]);
+            progressData.add(map);
+        }
+        return progressData;
+    }
 
 
     private Attachment handleFileUploadForAuditResponse(MultipartFile file, Long auditId) throws IOException {
@@ -464,6 +529,7 @@ public class AuditServiceImpl implements AuditService {
         return auditTypes.stream().map(audit->modelMapper.map(audit,AuditTypeDto.class))
                 .collect(Collectors.toList());
     }
+
 
 
 

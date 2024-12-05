@@ -18,6 +18,7 @@ public class AuditResponseDto {
     private Long auditId; // Audit ID that the response is associated with
     private String response; // The response text
     private LocalDate responseDate; // The date when the response was submitted
-
+    private Long statusId;
+    private AuditResponseUserDto responseUser;
     private List<AttachmentDto> attachments; // List of attachment DTOs
 }

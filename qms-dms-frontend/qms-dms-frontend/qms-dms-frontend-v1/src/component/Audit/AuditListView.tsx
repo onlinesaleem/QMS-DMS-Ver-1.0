@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ReplyIcon from '@mui/icons-material/Reply';
+import SummarizeIcon from '@mui/icons-material/Summarize';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { getAuditAttachments, getAudits, getFileBlob } from '../../service/AuditService';
 
@@ -59,7 +60,9 @@ const AuditListView = () => {
     const [selectedAudit, setSelectedAudit] = useState<any | null>(null);
     const [open, setOpen] = useState(false); 
     
+    
   const navigate=useNavigate();
+
     useEffect(() => {
         const fetchAudits = async () => {
             try {
@@ -110,6 +113,9 @@ const AuditListView = () => {
       setOpen(true); // Open the modal
     };
 
+    const auditReport=(auditId:number)=>{
+        navigate(`/audits/${auditId}`)
+    }
 
    const handleResponseClick=(auditId:number)=>{
     navigate(`/audits/response/${auditId}`);
@@ -200,6 +206,18 @@ const AuditListView = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
+                                        {audit.status.id===3 &&
+                                        <StyledButton
+                                        variant="contained"
+                                        color="primary"
+                                        startIcon={<SummarizeIcon/>}
+                                        size="small"
+                                        onClick={() => auditReport(audit.id)}>
+                                        Report
+                                    </StyledButton>
+                                    
+                                        }
+                                        {audit.status.id===1 &&
                                         <StyledButton
                                             variant="contained"
                                             color="primary"
@@ -208,6 +226,8 @@ const AuditListView = () => {
                                             onClick={() => handleEditClick(audit.id)}>
                                             Edit
                                         </StyledButton>
+                                        }
+                                         {audit.status.id===1 &&
                                         <StyledButton
                                             variant="contained"
                                             color="secondary"
@@ -217,6 +237,7 @@ const AuditListView = () => {
                                         >
                                             Respond
                                         </StyledButton>
+}
                                         <StyledButton
                                             variant="outlined"
                                             startIcon={<AttachFileIcon />}

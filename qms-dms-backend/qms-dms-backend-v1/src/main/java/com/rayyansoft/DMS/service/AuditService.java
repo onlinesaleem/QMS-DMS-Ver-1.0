@@ -1,14 +1,12 @@
 package com.rayyansoft.DMS.service;
 
 import com.rayyansoft.DMS.dto.*;
-import com.rayyansoft.DMS.entity.Attachment;
-import com.rayyansoft.DMS.entity.Audit;
-import com.rayyansoft.DMS.entity.AuditResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+
 public interface AuditService {
 
     public Long findUserIdByUsername(String username);
@@ -26,7 +24,7 @@ public interface AuditService {
 
     public List<AttachmentDto> getAttachmentsForAudit(Long auditId) ;
 
-    public void submitAuditResponse(Long auditId, String response, MultipartFile file) throws IOException;
+    public void submitAuditResponse(Long auditId, AuditResponseDto response, MultipartFile file) throws IOException;
 
     public AuditCreateDto updateAuditWithAttachments(Long auditId, AuditCreateDto auditCreateDto, MultipartFile file) throws IOException ;
 
@@ -36,4 +34,14 @@ public interface AuditService {
 
 
     public AuditDetailDto getAuditDetails(Long auditId);
+
+    public Map<String, Long> getAuditSummary();
+
+    public List<Map<String, Object>> getMonthlyAuditData();
+
+    public List<Map<String, Object>> getAuditCompletionProgress();
+
+
+
+
 }
