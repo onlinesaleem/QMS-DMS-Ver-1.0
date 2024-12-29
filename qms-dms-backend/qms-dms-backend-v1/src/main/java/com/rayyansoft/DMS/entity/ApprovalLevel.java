@@ -43,6 +43,7 @@ public class ApprovalLevel {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;  // Time when the action was taken
 
+
     public enum ApprovalStatus {
         PENDING,
         APPROVED,

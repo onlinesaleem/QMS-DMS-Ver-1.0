@@ -102,4 +102,8 @@ public class Document {
         UNDER_REVISION
     }
 
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentVersion> documentVersions;
+
+
 }

@@ -1,5 +1,6 @@
 package com.rayyansoft.DMS.dto;
 
+import com.rayyansoft.DMS.entity.DocumentVersion;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,7 +28,8 @@ public class AttachmentDto {
 
     private String referenceType; // Type of reference (e.g., "DOCUMENT", "AUDIT")
 
-
+    //private DocumentVersionDto documentVersionDto;
     // Getters and setters
+    private DocumentVersionDto documentVersion;
 
 }

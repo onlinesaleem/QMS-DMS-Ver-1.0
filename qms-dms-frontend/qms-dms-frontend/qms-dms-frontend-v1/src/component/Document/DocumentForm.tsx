@@ -18,6 +18,7 @@ const DocumentForm: React.FC = () => {
     reviewDate:'',
     approvalStatus: 'UNDER_REVIEW',
     documentTypeId:0,
+    changeSummary:'',
     attachments: [],
   });
   const [templates, setTemplates] = useState<TemplateDTO[]>([]);
@@ -34,6 +35,7 @@ const DocumentForm: React.FC = () => {
   const [fileUrls, setFileUrls] = useState<{ [key: string]: string }>({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const[changeSummary,setChangeSummary]=useState('');
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -49,7 +51,7 @@ const DocumentForm: React.FC = () => {
       try{
         const response=await getDocumentTypes();
         setDocumentTypes(response.data);
-
+        console.log(response.data);
       }catch(error){
         console.error('Error fetching document types:',error);
       }
@@ -75,6 +77,7 @@ const DocumentForm: React.FC = () => {
         try {
           const response = await getTemplateById(selectedTemplateId);
           setDocument(prevDocument => ({ ...prevDocument, content: response.data.content }));
+          
         } catch (error) {
           console.error('Error loading template content:', error);
         }
@@ -90,6 +93,7 @@ const DocumentForm: React.FC = () => {
           const response = await getDocumentById(Number(id));
           setDocument(response.data);
           setDepartmentId(response.data.departmentId); // Set the departmentId correctly
+          setDocumentTypeId(response.data.documentTypeId || "");
         } catch (error) {
           console.error('Error fetching document:', error);
         }
@@ -162,7 +166,7 @@ const DocumentForm: React.FC = () => {
       formData.append('effectiveDate', document.effectiveDate);
       formData.append('issueDate', document.issueDate);
       formData.append('reviewDate', document.reviewDate);
-      
+      formData.append('changeSummary',document.changeSummary);
       selectedFiles.forEach(file => {
           formData.append('file', file);
       });
@@ -301,22 +305,30 @@ const DocumentForm: React.FC = () => {
             fullWidth></TextField>
             </Box>
 
-    <Box mb={2}>
-          <FormControl fullWidth>
-            <InputLabel>Document Type</InputLabel>
-            <Select
-              name="documentTypeId"
-              value={documentTypeId}
-              onChange={(e) => setDocumentTypeId(e.target.value)}
-              required
-            >
-              {documentTypes.map((documentType: any) => (
-                <MenuItem key={documentType.id} value={documentType.id}>{documentType.documentType}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          </Box>
-
+            <Box mb={2}>
+  <FormControl fullWidth>
+    <InputLabel>Document Type</InputLabel>
+    <Select
+      label="Document Type"
+      name="documentTypeId"
+      value={documentTypeId}
+      onChange={(e) => setDocumentTypeId(e.target.value)}
+      displayEmpty
+      variant="outlined"
+    >
+      {/* Placeholder option */}
+      <MenuItem disabled value="">
+        <em>Select Document Type</em>
+      </MenuItem>
+      {/* Map through document types */}
+      {documentTypes.map((docType: any) => (
+        <MenuItem key={docType.id} value={docType.id}>
+          {docType.documentType}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</Box>
 {/* 
         <Box mb={2}>
           <FormControl fullWidth>
@@ -333,7 +345,21 @@ const DocumentForm: React.FC = () => {
             </Select>
           </FormControl>
         </Box> */}
-        
+        {id &&(
+          <Box mb={2}>
+            <Typography variant="h6">Change summary:</Typography>
+            <TextField
+            label="changeSummary"
+            name="changeSummary"
+            
+            onChange={handleInputChange}
+            required
+            fullWidth
+          />
+
+          </Box>
+
+        )}
         {id && (
           <Box mb={2}>
             <Typography variant="h6">Current Attachments:</Typography>

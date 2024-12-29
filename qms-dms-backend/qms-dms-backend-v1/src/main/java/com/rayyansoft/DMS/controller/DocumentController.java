@@ -88,8 +88,8 @@ public class DocumentController {
 
                                                       @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
 
-        System.out.println("the document to update is"+id);
-        DocumentDto savedDocument = documentService.updateDocument(id, documentDto, file);
+
+        DocumentDto savedDocument = documentService.updateDocument(id,documentDto, file);
         return ResponseEntity.ok(savedDocument);
     }
 

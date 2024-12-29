@@ -119,11 +119,7 @@ export const GetMenuItems = (): MenuItem[] => {
           //onClick: () => navigate("/document-content-search"),
           onClick: () => navigate("/document-card-view"),
         },
-        {
-          label: "View Documents",
-          icon: <AssessmentTwoToneIcon />,
-          onClick: () => navigate("/documents"),
-        },
+   
         {
           label: "Quality Templates",
           icon: <AssessmentTwoToneIcon />,

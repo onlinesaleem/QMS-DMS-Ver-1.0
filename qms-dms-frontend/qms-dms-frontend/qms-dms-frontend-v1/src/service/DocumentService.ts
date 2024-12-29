@@ -28,6 +28,7 @@ export interface AttachmentDTO {
     documentId?: number;
     uploadDate?: string;
     contentText?:string;
+    documentVersion?: DocumentVersionDto; // Reference to the related document version
 }
 
 export interface DocumentDTO {
@@ -50,9 +51,16 @@ export interface DocumentDTO {
     attachments?: AttachmentDTO[];
     documentDepartment?:Department;
     documentType?:DocumentType
+    changeSummary?:string;
+    documentVersion?:DocumentVersionDto[];
 
 }
 
+export interface DocumentVersionDto{
+    id?:number;
+    revisionNumber?:number;
+    changeSummary?:string;
+}
 
 export interface Department {
     

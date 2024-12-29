@@ -55,6 +55,10 @@ public class Attachment {
     @JoinColumn(name = "audit_response_id")
     private AuditResponse auditResponse;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "document_version_id")
+    private DocumentVersion documentVersion; // Link to the specific version
+
     @Override
     public String toString() {
         return "Attachment{" +

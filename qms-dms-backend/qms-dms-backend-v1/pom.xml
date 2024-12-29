@@ -131,7 +131,11 @@
 			<version>2.0.27</version> <!-- Use the latest version -->
 		</dependency>
 
-
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
 
     </dependencies>
 

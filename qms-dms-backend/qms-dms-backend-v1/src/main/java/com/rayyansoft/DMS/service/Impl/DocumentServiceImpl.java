@@ -43,6 +43,7 @@ public class DocumentServiceImpl implements DocumentService {
     private DocumentApprovalWorkflowRepository documentApprovalWorkflowRepository;
     private DocumentApprovalUserRepository documentApprovalUserRepository;
     private ApprovalLevelRepository approvalLevelRepository;
+    private DocumentVersionRepository documentVersionRepository;
 
     @Override
     public DocumentDto createDocument(DocumentDto documentDTO, AttachmentDto attachmentDTO, MultipartFile file) throws IOException {
@@ -67,7 +68,9 @@ public class DocumentServiceImpl implements DocumentService {
         document.setDocumentType(documentType);
 
         Document savedDocument = documentRepository.save(document);
-
+// Create Approval Levels (you will implement the logic to determine approvers)
+        List<DocumentApprovalUserDto> approvers = getApproversForDocument(savedDocument); // Custom logic to find approvers
+        createApprovalLevelsForDocument(savedDocument, approvers); // Creating approval levels
         if (file != null && !file.isEmpty()) {
             System.out.println("File received: " + file.getOriginalFilename());
 
@@ -253,6 +256,7 @@ public class DocumentServiceImpl implements DocumentService {
         document.setUpdatedBy(user.get());
         document.setDocumentDepartment(department);
         document.setDocumentType(documentType);
+        document.setRevisionNumber(document.getRevisionNumber()+1);
         document.setIssueDate(documentDTO.getIssueDate());
         document.setEffectiveDate(document.getEffectiveDate());
         document.setReviewDate(document.getReviewDate());
@@ -260,20 +264,42 @@ public class DocumentServiceImpl implements DocumentService {
         // Handle attachment updates
         List<Attachment> existingAttachments = attachmentRepository.findByDocumentId(id);
 
+
+
+
+        Document savedDocument = documentRepository.save(document);
+
+
+
+
+        //Document version handling
+        DocumentVersion version = new DocumentVersion();
+        version.setDocument(savedDocument);
+        version.setRevisionNumber(savedDocument.getRevisionNumber());
+        version.setContent(savedDocument.getContent());
+        version.setUpdatedBy(savedDocument.getUpdatedBy());
+        version.setUpdatedDate(savedDocument.getUpdatedDate());
+        version.setApprovalStatus(savedDocument.getApprovalStatus());
+        version.setChangeSummary(documentDTO.getChangeSummary());
+
+       DocumentVersion savedDocumentVersion= documentVersionRepository.save(version);
+
+
+
         // If a new file is uploaded, delete old attachments and save the new one
         if (file != null && !file.isEmpty()) {
             // Delete existing attachments from both the file system and database
-            for (Attachment attachment : existingAttachments) {
-                java.io.File existingFile = new java.io.File(attachment.getFilePath());
-                if (existingFile.exists() && existingFile.delete()) {
-                    System.out.println("Deleted existing file: " + attachment.getFilePath());
-                    attachmentRepository.delete(attachment); // Delete attachment record
-                    System.out.println("Deleted attachment record from database: " + attachment.getFileName());
-                } else {
-                    System.out.println("File not found or failed to delete: " + attachment.getFilePath());
-                    attachmentRepository.delete(attachment); // Delete attachment record even if file is missing
-                }
-            }
+//            for (Attachment attachment : existingAttachments) {
+//                java.io.File existingFile = new java.io.File(attachment.getFilePath());
+//                if (existingFile.exists() && existingFile.delete()) {
+//                    System.out.println("Deleted existing file: " + attachment.getFilePath());
+//                    attachmentRepository.delete(attachment); // Delete attachment record
+//                    System.out.println("Deleted attachment record from database: " + attachment.getFileName());
+//                } else {
+//                    System.out.println("File not found or failed to delete: " + attachment.getFilePath());
+//                    attachmentRepository.delete(attachment); // Delete attachment record even if file is missing
+//                }
+//            }
 
             // Save the new file
             String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
@@ -281,8 +307,6 @@ public class DocumentServiceImpl implements DocumentService {
             java.io.File targetFile = new java.io.File(filePath);
             file.transferTo(targetFile);
 
-            // Extract text from the new file if it's a PDF
-            String extractedText = "";
 
 
             // Save the new attachment with extracted text
@@ -290,15 +314,24 @@ public class DocumentServiceImpl implements DocumentService {
             newAttachment.setFileName(uniqueFileName);
             newAttachment.setFilePath(filePath);
             newAttachment.setUploadDate(new Date());
-            newAttachment.setDocument(document);
-            newAttachment.setContentText(extractedText); // Store extracted text in contentText field
+            newAttachment.setDocument(savedDocument);
+            newAttachment.setReferenceId(savedDocument.getId());
+            newAttachment.setReferenceType("DMS");
+            newAttachment.setDocumentVersion(savedDocumentVersion);
             attachmentRepository.save(newAttachment);
-            System.out.println("New attachment saved with text extraction: " + newAttachment.getFileName());
+            // Extract text from the saved file directly
+            String extractedText = extractTextFromFile(newAttachment.getFilePath());
+            if (extractedText != null && !extractedText.isEmpty()) {
+                newAttachment.setContentText(extractedText);  // Update with extracted text
+                attachmentRepository.save(newAttachment);
+            } else {
+                System.out.println("No text extracted from the file.");
+            }
         } else {
             System.out.println("No new file uploaded, retaining existing attachments");
         }
 
-        Document savedDocument = documentRepository.save(document);
+
         return modelMapper.map(savedDocument, DocumentDto.class);
     }
 
